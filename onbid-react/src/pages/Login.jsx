@@ -2,6 +2,21 @@ import React, { useState } from 'react';
 import { TextField, Button, Box, Typography, Container } from '@mui/material';
 import { authAPI } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://localhost:8092',
+});
+
+// 온비드 데이터 가져오기 (Spring Boot 연결)
+export const onbidAPI = {
+  getTest: () => api.get('/api/onbid/test'),
+  
+  
+};
+
+
+
 
 const Login = () => {
     const [credentials, setCredentials] = useState({

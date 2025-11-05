@@ -5,9 +5,30 @@
 
 <mapper namespace="com.pci.onbid.mapper.OnbidMapper">
 
+    <!-- DB 저장용 -->
     <insert id="insert" parameterType="com.pci.onbid.domain.OnbidItem">
-        INSERT INTO onbid_item (cltr_nm, ldnm_adrs, min_bid_prc)
+        INSERT IGNORE INTO onbid_item (cltr_nm, ldnm_adrs, min_bid_prc)
         VALUES (#{cltrNm}, #{ldnmAdrs}, #{minBidPrc})
     </insert>
 
+    <!-- ✅ 프론트에서 목록 조회용 -->
+    <select id="findAll" resultType="com.pci.onbid.domain.OnbidItem">
+        SELECT cltr_nm AS cltrNm,
+        ldnm_adrs AS ldnmAdrs,
+        min_bid_prc AS minBidPrc
+        FROM onbid_item
+        ORDER BY id DESC
+    </select>
+
+    <!-- ✅ 검색용 -->
+    <select id="search" parameterType="string" resultType="com.pci.onbid.domain.OnbidItem">
+        SELECT cltr_nm AS cltrNm,
+        ldnm_adrs AS ldnmAdrs,
+        min_bid_prc AS minBidPrc,
+        DATE_FORMAT(created_at, '%Y-%m-%d %H:%i') AS createdAt
+        FROM onbid_item
+        WHERE cltr_nm LIKE CONCAT('%', #{keyword}, '%')
+        OR ldnm_adrs LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY id DESC
+    </select>
 </mapper>
