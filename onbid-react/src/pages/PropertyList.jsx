@@ -26,6 +26,18 @@ const PropertyList = () => {
     fetchProperties();
   }, []);
 
+  // 날짜 포맷 변환 함수
+  const formatBidDate = (dateStr) => {
+    if (!dateStr) return '-';
+    const clean = dateStr.replace(/\D/g, ''); // 숫자만 추출
+    const year = clean.slice(0, 4);
+    const month = clean.slice(4, 6);
+    const day = clean.slice(6, 8);
+    const hour = clean.slice(8, 10) || '00';
+    const minute = clean.slice(10, 12) || '00';
+    return `${year}-${month}-${day} ${hour}:${minute}`;
+  };
+
   // ✅ 백엔드 데이터 가져오기
   const fetchProperties = async () => {
     try {
@@ -42,18 +54,18 @@ const PropertyList = () => {
   };
 
   // ✅ 검색 처리 
-const handleSearch = async () => {
-  try {
-    setLoading(true);
-    const response = await onbidAPI.search(searchParams.keyword);
-    setProperties(response.data || []);
-  } catch (error) {
-    console.error('검색 실패:', error);
-    setError('검색 중 오류가 발생했습니다.');
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleSearch = async () => {
+    try {
+      setLoading(true);
+      const response = await onbidAPI.search(searchParams.keyword);
+      setProperties(response.data || []);
+    } catch (error) {
+      console.error('검색 실패:', error);
+      setError('검색 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   // ✅ 입력 변경
@@ -89,8 +101,15 @@ const handleSearch = async () => {
                 onChange={handleChange}
                 placeholder="예: 아파트, 경기도"
                 helperText="물건명이나 주소의 일부를 입력하세요"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault(); // 폼 자동 submit 방지
+                    handleSearch();     // 검색 실행
+                  }
+                }}
               />
             </Grid>
+
             <Grid item xs={12} sm={4}>
               <Button
                 variant="contained"
@@ -110,20 +129,96 @@ const handleSearch = async () => {
           </Typography>
         )}
 
-        {/* 물건 카드 리스트 */}
+
         <Grid container spacing={3}>
           {properties.map((property, idx) => (
             <Grid item xs={12} sm={6} md={4} key={idx}>
               <Card>
                 <CardContent>
-                  <Typography variant="h6">{property.cltrNm || '이름없음'}</Typography>
-                  <Typography color="text.secondary">
-                    주소: {property.ldnmAdrs || '-'}
+                  {/* 물건명 */}
+                  {/* 물건명 + 지도이모지 (복수 주소 지원) */}
+                  <Typography variant="h6" gutterBottom>
+                    {(() => {
+                      const name = (property.cltrNm || '이름없음').replace(/[\d\-,\s]+$/, '').trim();
+                      const address = property.ldnmAdrs || '';
+
+                      // 콤마(,) 기준으로 여러 주소 분리
+                      const addressList = address.split(',').map((addr) => addr.trim());
+
+                      return (
+                        <>
+                          {name}{' '}
+                          {addressList.map((addr, i) => {
+                            if (!addr) return null;
+                            const mapUrl = `https://map.kakao.com/link/search/${encodeURIComponent(addr)}`;
+                            return (
+                              <a
+                                key={i}
+                                href={mapUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={`${addr} (카카오맵에서 보기)`}
+                                style={{
+                                  display: 'inline-block',
+                                  textDecoration: 'none',
+                                  marginLeft: '6px',
+                                  fontSize: '1.1em',
+                                }}
+                              >
+                                🗺️
+                              </a>
+                            );
+                          })}
+                        </>
+                      );
+                    })()}
                   </Typography>
-                  <Typography>최저입찰가: {property.minBidPrc || '-'}원</Typography>
-                  <Typography>입찰일자: {property.bidDt || '-'}</Typography>
-                  <Typography>공매번호: {property.pbctNo || '-'}</Typography>
-                  <Typography> 등록일: {property.createdAt || '-'}</Typography>
+
+
+
+                  {/* 주소 정보 */}
+                  <Typography color="text.secondary" gutterBottom>
+                    📍 {property.sido || '-'} | {property.ldnmAdrs || '-'}
+                  </Typography>
+
+                  {/* 가격 정보 */}
+                  <Box sx={{ my: 1 }}>
+                    <Typography color="primary" sx={{ fontWeight: 'bold' }}>
+                      최저입찰가: {property.minBidPrc ? Number(property.minBidPrc).toLocaleString() : '-'}원
+                    </Typography>
+                    <Typography color="text.secondary">
+                      감정가: {property.apslAsesAvgAmt ? Number(property.apslAsesAvgAmt).toLocaleString() : '-'}원
+                    </Typography>
+                  </Box>
+
+                  {/* 입찰 기간 */}
+                  <Typography variant="body2" gutterBottom>
+                    📅 입찰기간: {formatBidDate(property.pbctBegnDtm)}
+                    ~ {formatBidDate(property.pbctClsDtm)}
+                  </Typography>
+
+                  {/* 진행 상태 */}
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: property.pbctCltrStatNm === '입찰중' ? 'success.main' :
+                        property.pbctCltrStatNm === '낙찰' ? 'error.main' : 'text.secondary',
+                      fontWeight: 'bold',
+                      mt: 1
+                    }}
+                  >
+                    ⚡ 상태: {property.pbctCltrStatNm || '-'}
+                  </Typography>
+
+                  {/* 관리 정보 */}
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="caption" display="block" color="text.secondary">
+                      📋 공고번호: {property.plnmNo || '-'}
+                    </Typography>
+                    <Typography variant="caption" display="block" color="text.secondary">
+                      🕒 등록: {new Date(property.createdAt).toLocaleDateString()}
+                    </Typography>
+                  </Box>
                 </CardContent>
                 <CardActions>
                   <BookmarkButton propertyId={property.id} />
