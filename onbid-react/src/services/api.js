@@ -63,7 +63,7 @@ api.interceptors.response.use(
 export const onbidAPI = {
   // 스프링의 @GetMapping("/api/onbid/test") 와 연결
   getList: () => api.get('/api/onbid/list'),
-   search: (keyword) => api.get(`/api/onbid/search?keyword=${encodeURIComponent(keyword)}`),
+  search: (keyword) => api.get(`/api/onbid/search?keyword=${encodeURIComponent(keyword)}`),
 };
 
 // ✅ 로그인 관련 (추후 확장용)
@@ -74,11 +74,13 @@ export const authAPI = {
 
 // ✅ 물건·북마크 관련 (추후 확장용)
 export const propertyAPI = {
+  // legacy endpoints left for future use
   getList: (params) => api.get('/api/properties', { params }),
   getDetail: (id) => api.get(`/api/properties/${id}`),
   search: (searchParams) => api.get('/api/properties/search', { params: searchParams }),
-  saveBookmark: (propertyId) => api.post(`/api/bookmarks/${propertyId}`),
-  getBookmarks: () => api.get('/api/bookmarks'),
+  // Bookmark endpoints per backend spec (userId=guest default)
+  saveBookmark: (propertyId, userId = 'guest') => api.post(`/api/bookmarks/${propertyId}?userId=${encodeURIComponent(userId)}`),
+  getBookmarks: (userId = 'guest') => api.get(`/api/bookmarks?userId=${encodeURIComponent(userId)}`),
 };
 
 export default api;
