@@ -121,6 +121,12 @@ const PropertyList = () => {
             sx={{
               bgcolor: '#fff',
               borderRadius: 1,
+              '& .MuiInputBase-input': {
+                color: '#111',         // ✅ 입력 글자색 진하게
+              },
+              '& .MuiInputLabel-root': {
+                color: '#333',         // ✅ placeholder 색
+              },
             }}
           />
           <Button
@@ -154,6 +160,7 @@ const PropertyList = () => {
                 backgroundColor: '#fff',
                 color: '#111',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                position: 'relative',  // ✅ 상대위치 기준
                 transition: 'all 0.25s ease',
                 '&:hover': {
                   transform: 'translateY(-6px)',
@@ -266,9 +273,15 @@ const PropertyList = () => {
                   </Typography>
                 </Box>
               </CardContent>
-              <CardActions>
-                <BookmarkButton propertyId={property.id} />
-              </CardActions>
+              <Box
+                sx={{
+                  position: 'absolute',   // 카드 기준으로 절대 위치
+                  bottom: 8,              // 카드 아래에서 8px 위로
+                  left: 12,               // 카드 왼쪽에서 12px 오른쪽으로
+                }}
+              >
+                <BookmarkButton propertyId={Number(property.id)} />
+              </Box>
             </Card>
           ))}
         </Box>

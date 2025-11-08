@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { propertyAPI } from '../services/api';
 
 const BookmarkContext = createContext();
@@ -10,49 +10,48 @@ export const BookmarkProvider = ({ children }) => {
   const loadBookmarks = useCallback(async () => {
     try {
       const res = await propertyAPI.getBookmarks(userId);
-      const list = res.data || [];
-      setBookmarkedItems(new Set(list.map(it => String(it.id))));
+      const ids = (res.data || []).map(b => String(b.itemId ?? b.item_id ?? b.id));
+      setBookmarkedItems(new Set(ids));
     } catch (err) {
-      console.error('북마크 불러오기 실패:', err);
+      console.error('❌ 북마크 불러오기 실패:', err);
+      setBookmarkedItems(new Set());
     }
   }, []);
 
   const toggleBookmark = useCallback(async (propertyId) => {
     try {
-      const res = await propertyAPI.saveBookmark(propertyId, userId);
-      if (res && res.data !== undefined) {
-        setBookmarkedItems(prev => {
-          const next = new Set(prev);
-          if (res.data) {
-            next.add(String(propertyId));
-          } else {
-            next.delete(String(propertyId));
-          }
-          return next;
-        });
-        return res.data;
-      }
-    } catch (err) {
-      console.error('북마크 토글 실패:', err);
-      return false;
-    }
-  }, []);
+      const res = await propertyAPI.toggleBookmark(propertyId, userId);
+      const ok = res?.data === true || res?.data === 'true' || res?.data === 1;
 
-  const isBookmarked = useCallback((propertyId) => {
-    return bookmarkedItems.has(String(propertyId));
-  }, [bookmarkedItems]);
+      setBookmarkedItems(prev => {
+        const next = new Set(prev);
+        const key = String(propertyId);
+        if (ok) next.add(key);
+        else next.delete(key);
+        return next;
+      });
+
+      // ✅ Context 내부에서만 상태 유지, 외부 이벤트 삭제
+      await loadBookmarks();
+    } catch (err) {
+      console.error('❌ 북마크 토글 실패:', err);
+    }
+  }, [loadBookmarks]);
+
+  useEffect(() => {
+    loadBookmarks();
+  }, [loadBookmarks]);
+
+  const isBookmarked = useCallback(
+    (propertyId) => bookmarkedItems.has(String(propertyId)),
+    [bookmarkedItems]
+  );
 
   return (
-    <BookmarkContext.Provider value={{ isBookmarked, toggleBookmark, loadBookmarks }}>
+    <BookmarkContext.Provider value={{ isBookmarked, toggleBookmark }}>
       {children}
     </BookmarkContext.Provider>
   );
 };
 
-export const useBookmark = () => {
-  const context = useContext(BookmarkContext);
-  if (!context) {
-    throw new Error('useBookmark must be used within a BookmarkProvider');
-  }
-  return context;
-};
+export const useBookmark = () => useContext(BookmarkContext);

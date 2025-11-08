@@ -7,7 +7,7 @@
 
     <!-- ✅ DB 저장용 -->
     <insert id="insert" parameterType="com.pci.onbid.domain.OnbidItem">
-        INSERT INTO onbid_item (
+        INSERT IGNORE onbid_item (
         plnm_no, cltr_nm, ldnm_adrs,
         min_bid_prc, apsl_ases_avg_amt,
         pbct_begn_dtm, pbct_cls_dtm,
