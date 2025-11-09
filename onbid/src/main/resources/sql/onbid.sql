@@ -19,6 +19,7 @@ CREATE TABLE onbid_item (
 
 DROP TABLE IF EXISTS onbid_item;
 SELECT * FROM onbid_item;
+ALTER TABLE onbid_item ADD UNIQUE (plnm_no);
 
 DELETE t1 FROM onbid_item t1
 JOIN onbid_item t2
@@ -28,3 +29,15 @@ JOIN onbid_item t2
 
 ALTER TABLE onbid_item
     ADD CONSTRAINT uq_onbid_unique UNIQUE (cltr_nm, ldnm_adrs);
+
+ALTER TABLE onbid_item ADD UNIQUE (plnm_no);
+
+CREATE TABLE bookmark (
+                          id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                          item_id BIGINT NOT NULL,
+                          user_id VARCHAR(100) NOT NULL,
+                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                          FOREIGN KEY (item_id) REFERENCES onbid_item(id)
+);
+ALTER TABLE bookmark MODIFY COLUMN user_id VARCHAR(50);
+SELECT * FROM bookmark;

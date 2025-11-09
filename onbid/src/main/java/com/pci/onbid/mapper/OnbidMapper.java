@@ -12,4 +12,6 @@ public interface OnbidMapper {
 
     List<OnbidItem> findAll();
     List<OnbidItem> search(String keyword); //검색용
+
+    List<OnbidItem> searchAdvanced(String region, String category, String status, Long minPrice, Long maxPrice);
 }
