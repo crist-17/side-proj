@@ -41,3 +41,10 @@ CREATE TABLE bookmark (
 );
 ALTER TABLE bookmark MODIFY COLUMN user_id VARCHAR(50);
 SELECT * FROM bookmark;
+
+
+SELECT COUNT(*) FROM onbid_item;
+
+SHOW TABLES;
+ALTER TABLE onbid_item DROP INDEX plnm_no;
+ALTER TABLE onbid_item DROP INDEX uq_onbid_unique;

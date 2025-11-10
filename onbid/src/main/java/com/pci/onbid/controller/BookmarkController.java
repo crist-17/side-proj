@@ -15,6 +15,7 @@ import java.util.List;
 public class BookmarkController {
     private final BookmarkService bookmarkService;
 
+
     @PostMapping("/{itemId}")
     public ResponseEntity<Boolean> toggleBookmark(
             @PathVariable Long itemId,

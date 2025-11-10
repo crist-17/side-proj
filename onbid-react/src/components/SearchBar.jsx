@@ -65,7 +65,7 @@ const handleSearch = async () => {
       <Grid item xs={2}>
         <TextField
           name="status"
-          label="진행상태 (예: 가능, 종료)"
+          label="진행상태 (예: 가능, 준비, 종료)"
           size="small"
           fullWidth
           onChange={handleChange}
