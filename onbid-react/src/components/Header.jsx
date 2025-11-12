@@ -33,8 +33,18 @@ const Header = ({ onMenuClick }) => {
           }}
           sx={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
         >
-          <Typography variant="h6" noWrap>
-            온비드 물건관리
+          <Typography
+            variant="h6"
+            noWrap={false}
+            sx={{
+              fontWeight: 700,
+              textAlign: 'center',
+              lineHeight: 1.1,     // ✅ 줄 간 간격 줄이기 (기본은 약 1.5)
+            }}
+          >
+            온비드 공매물관리
+            <br />
+            <span style={{ fontSize: '0.8em', color: '#aaa' }}>(2015~2025)</span>
           </Typography>
         </Box>
 

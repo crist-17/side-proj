@@ -5,46 +5,56 @@
 
 <mapper namespace="com.pci.onbid.mapper.OnbidMapper">
 
-    <!-- ✅ 데이터 삽입 -->
-    <insert id="insert" parameterType="com.pci.onbid.domain.OnbidItem">
-        INSERT IGNORE onbid_item (
-        plnm_no, cltr_nm, ldnm_adrs,
-        min_bid_prc, apsl_ases_avg_amt,
-        pbct_begn_dtm, pbct_cls_dtm,
-        pbct_cltr_stat_nm, sido, created_at
-        )
-        VALUES (
-        #{plnmNo}, #{cltrNm}, #{ldnmAdrs},
-        #{minBidPrc}, #{apslAsesAvgAmt},
-        #{pbctBegnDtm}, #{pbctClsDtm},
-        #{pbctCltrStatNm}, #{sido}, NOW()
-        )
-    </insert>
-
     <!-- ✅ 전체 조회 -->
     <select id="findAll" resultType="com.pci.onbid.domain.OnbidItem">
         SELECT
-        id, plnm_no AS plnmNo, cltr_nm AS cltrNm,
-        ldnm_adrs AS ldnmAdrs, min_bid_prc AS minBidPrc,
+        id,
+        plnm_no AS plnmNo,
+        cltr_mnmt_no AS cltrMnmtNo,
+        cltr_nm AS cltrNm,
+        ldnm_adrs AS ldnmAdrs,
+        min_bid_prc AS minBidPrc,
         apsl_ases_avg_amt AS apslAsesAvgAmt,
-        pbct_begn_dtm AS pbctBegnDtm, pbct_cls_dtm AS pbctClsDtm,
-        pbct_cltr_stat_nm AS pbctCltrStatNm, sido, created_at AS regDate
+        pbct_begn_dtm AS pbctBegnDtm,
+        pbct_cls_dtm AS pbctClsDtm,
+        pbct_cltr_stat_nm AS pbctCltrStatNm,
+        sido,
+        created_at AS createdAt
         FROM onbid_item
         ORDER BY id DESC
     </select>
 
-    <!-- ✅ 세분화 검색 (AND 기반) -->
+    <!-- ✅ 단일 삽입 -->
+    <insert id="insert" parameterType="com.pci.onbid.domain.OnbidItem">
+        INSERT INTO onbid_item
+        (plnm_no, cltr_mnmt_no, cltr_nm, ldnm_adrs, min_bid_prc,
+        apsl_ases_avg_amt, pbct_begn_dtm, pbct_cls_dtm,
+        pbct_cltr_stat_nm, sido)
+        VALUES
+        (#{plnmNo}, #{cltrMnmtNo}, #{cltrNm}, #{ldnmAdrs}, #{minBidPrc},
+        #{apslAsesAvgAmt}, #{pbctBegnDtm}, #{pbctClsDtm},
+        #{pbctCltrStatNm}, #{sido})
+    </insert>
+
+    <!-- ✅ 검색 기능 -->
     <select id="searchAdvanced" resultType="com.pci.onbid.domain.OnbidItem">
         SELECT
-        id, plnm_no AS plnmNo, cltr_nm AS cltrNm,
-        ldnm_adrs AS ldnmAdrs, min_bid_prc AS minBidPrc,
+        id,
+        plnm_no AS plnmNo,
+        cltr_mnmt_no AS cltrMnmtNo,
+        cltr_nm AS cltrNm,
+        ldnm_adrs AS ldnmAdrs,
+        min_bid_prc AS minBidPrc,
         apsl_ases_avg_amt AS apslAsesAvgAmt,
-        pbct_begn_dtm AS pbctBegnDtm, pbct_cls_dtm AS pbctClsDtm,
-        pbct_cltr_stat_nm AS pbctCltrStatNm, sido, created_at AS regDate
+        pbct_begn_dtm AS pbctBegnDtm,
+        pbct_cls_dtm AS pbctClsDtm,
+        pbct_cltr_stat_nm AS pbctCltrStatNm,
+        sido,
+        created_at AS createdAt
         FROM onbid_item
         WHERE 1=1
         <if test="region != null and region != ''">
-            AND ldnm_adrs LIKE CONCAT('%', #{region}, '%')
+            AND sido LIKE CONCAT('%', #{region}, '%')
         </if>
         <if test="category != null and category != ''">
             AND cltr_nm LIKE CONCAT('%', #{category}, '%')
@@ -53,12 +63,53 @@
             AND pbct_cltr_stat_nm LIKE CONCAT('%', #{status}, '%')
         </if>
         <if test="minPrice != null">
-            AND CAST(min_bid_prc AS UNSIGNED) &gt;= #{minPrice}
+            AND CAST(min_bid_prc AS UNSIGNED) >= #{minPrice}
         </if>
         <if test="maxPrice != null">
             AND CAST(min_bid_prc AS UNSIGNED) &lt;= #{maxPrice}
         </if>
         ORDER BY id DESC
+    </select>
+
+    <!-- ✅ [추가] 주소 기준 그룹 조회 -->
+    <select id="selectGroupedByAddress" resultType="com.pci.onbid.domain.AddressGroupedDto">
+        SELECT
+        TRIM(
+        REGEXP_REPLACE(
+        REGEXP_REPLACE(ldnm_adrs, '\\\\[.*?\\\\]', ''),
+        '\\\\(.*?\\\\)', ''
+        )
+        ) AS address,
+        COUNT(*) AS count
+        FROM onbid_item
+        WHERE ldnm_adrs IS NOT NULL AND ldnm_adrs <> ''
+        <if test="q != null and q != ''">
+            AND ldnm_adrs LIKE CONCAT('%', #{q}, '%')
+        </if>
+        GROUP BY address
+        ORDER BY count DESC, address ASC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <!-- ✅ [추가] 주소별 이력 조회 -->
+    <select id="selectHistoryByAddress" resultType="com.pci.onbid.domain.HistoryDto">
+        SELECT
+        h.cltr_hstr_no AS cltrHstrNo,
+        h.cltr_no AS cltrNo,
+        h.pbct_begn_dtm AS pbctBegnDtm,
+        h.pbct_cls_dtm AS pbctClsDtm,
+        h.open_price AS openPrice,
+        h.cltr_stts_nm AS cltrSttsNm
+        FROM onbid_history h
+        JOIN onbid_item i ON i.id = h.item_id
+        WHERE
+        TRIM(
+        REGEXP_REPLACE(
+        REGEXP_REPLACE(i.ldnm_adrs, '\\\\[.*?\\\\]', ''),
+        '\\\\(.*?\\\\)', ''
+        )
+        ) = #{address}
+        ORDER BY h.pbct_begn_dtm DESC, h.id DESC
     </select>
 
 </mapper>

@@ -3,6 +3,7 @@ package com.pci.onbid.service;
 import com.pci.onbid.domain.OnbidItem;
 import com.pci.onbid.mapper.OnbidMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.*;
@@ -11,6 +12,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OnbidService {
@@ -26,7 +28,7 @@ public class OnbidService {
     /**
      * ✅ 서울 + 경기 공매물건 데이터 수집 및 DB 저장
      * - 중복은 DB에서 IGNORE로 무시됨
-     * - 각 구간별 진행상황 및 건수 출력
+     * - 각 구간별 진행상황 및 건수 로그 출력
      */
     public void fetchAndPrint() {
         try {
@@ -37,13 +39,18 @@ public class OnbidService {
             List<String> regions = List.of("서울특별시", "경기도");
 
             for (String region : regions) {
-                System.out.println("\n🏙️ 현재 지역 수집 중: " + region);
+                log.info("🏙️ 현재 지역 수집 중: {}", region);
 
-                for (int page = 1; page <= 5; page++) {
+                for (int page = 1; page <= 10; page++) {
+                    try {
+                        Thread.sleep(300); // 0.3초 대기
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                     String encodedRegion = URLEncoder.encode(region, StandardCharsets.UTF_8);
-                    String url = baseUrl + "/getKamcoPbctCltrList"
+                        String url = baseUrl + "/getKamcoPbctCltrList"
                             + "?serviceKey=" + serviceKey
-                            + "&numOfRows=20&pageNo=" + page
+                            + "&numOfRows=100&pageNo=" + page
                             + "&DPSL_MTD_CD=0001"
                             + "&CTGR_HIRK_ID=10000"
                             + "&CTGR_HIRK_ID_MID=10100"
@@ -51,13 +58,15 @@ public class OnbidService {
                             + "&PBCT_BEGN_DTM=20150101"
                             + "&PBCT_CLS_DTM=20251231";
 
+                    log.debug("📡 요청 URL: {}", url);
+
                     Document doc = DocumentBuilderFactory.newInstance()
                             .newDocumentBuilder()
                             .parse(url);
                     doc.getDocumentElement().normalize();
 
                     NodeList list = doc.getElementsByTagName("item");
-                    System.out.println("📄 [" + region + "] " + page + "페이지 항목 수: " + list.getLength());
+                    log.info("📄 [{}] {}페이지 항목 수: {}", region, page, list.getLength());
 
                     totalFetched += list.getLength();
 
@@ -75,6 +84,7 @@ public class OnbidService {
 
                         OnbidItem item = new OnbidItem();
                         item.setPlnmNo(getTagValue(e, "PLNM_NO"));
+                        item.setCltrMnmtNo(getTagValue(e, "CLTR_MNMT_NO")); // ✅ 물건번호 컬럼 추가
                         item.setCltrNm(cltrNm);
                         item.setLdnmAdrs(getTagValue(e, "LDNM_ADRS"));
                         item.setMinBidPrc(getTagValue(e, "MIN_BID_PRC"));
@@ -95,6 +105,7 @@ public class OnbidService {
                             int before = onbidMapper.findAll().size(); // insert 전 개수
                             onbidMapper.insert(item);
                             int after = onbidMapper.findAll().size();  // insert 후 개수
+
                             if (after > before) {
                                 totalInserted++;
                             } else {
@@ -102,7 +113,7 @@ public class OnbidService {
                             }
                         } catch (Exception ex) {
                             totalSkipped++;
-                            System.out.println("⚠️ 중복/삽입 실패: " + cltrNm);
+                            log.warn("⚠️ 중복/삽입 실패: {}", cltrNm);
                         }
                     }
 
@@ -110,12 +121,11 @@ public class OnbidService {
                 }
             }
 
-            System.out.println("\n🎯 총 수집: " + totalFetched
-                    + "건 | 저장 성공: " + totalInserted
-                    + "건 | 중복 무시: " + totalSkipped + "건");
+            log.info("🎯 총 수집: {}건 | 저장 성공: {}건 | 중복 무시: {}건",
+                    totalFetched, totalInserted, totalSkipped);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("❌ 데이터 수집 중 예외 발생", e);
         }
     }
 
