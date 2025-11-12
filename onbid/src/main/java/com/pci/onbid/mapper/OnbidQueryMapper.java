@@ -2,12 +2,14 @@
 package com.pci.onbid.mapper;
 
 import com.pci.onbid.domain.AddressGroupedDto;
-import com.pci.onbid.domain.AddressGroupedDto;
+
 import com.pci.onbid.domain.HistoryDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface OnbidQueryMapper {
@@ -24,4 +26,6 @@ public interface OnbidQueryMapper {
 
     // 주소별 이력 조회
     List<HistoryDto> selectHistoryByAddress(@Param("address") String address);
+
+    int insertHistoryIfNotExists(Map<String,? extends Serializable> itemId);
 }

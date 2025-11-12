@@ -10,14 +10,34 @@ import {
 } from '@mui/material';
 import { KeyboardArrowUp } from '@mui/icons-material';
 import BookmarkButton from '../components/BookmarkButton';
-import { onbidAPI } from '../services/api';
 import SearchBar from '../components/SearchBar';
+import HistoryModal from '../components/HistoryModal';
+import { onbidAPI } from '../services/api';
 
 const PropertyList = () => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showScroll, setShowScroll] = useState(false);
+
+  // ✅ 모달 관련 상태
+  const [open, setOpen] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState('');
+  const [history, setHistory] = useState([]);
+
+  // ✅ 카드 클릭 → 이력조회 실행
+  const handleCardClick = async (address) => {
+     try {
+    setSelectedAddress(address);
+    const res = await onbidAPI.getHistory(address);
+    console.log('📦 이력조회 응답 데이터:', res.data); // ✅ 응답 확인
+    const data = Array.isArray(res.data) ? res.data : [];
+    setHistory(data);
+    setOpen(true);
+  } catch (err) {
+    console.error('이력 조회 실패:', err);
+  }
+};
 
   // ✅ 날짜 포맷 함수
   const formatBidDate = (dateStr) => {
@@ -126,7 +146,9 @@ const PropertyList = () => {
               return (
                 <Card
                   key={`${property.plnmNo}-${property.id || idx}`}
+                  onClick={() => handleCardClick(property.ldnmAdrs)} // ✅ 카드 클릭 이벤트
                   sx={{
+                    cursor: 'pointer',
                     width: '300px',
                     minHeight: 300,
                     borderRadius: 3,
@@ -180,7 +202,6 @@ const PropertyList = () => {
 
                         return (
                           <>
-                            {/* 물건명 */}
                             <Typography
                               variant="h6"
                               sx={{
@@ -193,8 +214,6 @@ const PropertyList = () => {
                             >
                               {name}
                             </Typography>
-
-                            {/* 🗺️ 중앙정렬 밑줄 이모지 */}
                             <Box
                               sx={{
                                 display: 'flex',
@@ -292,7 +311,7 @@ const PropertyList = () => {
                       ⚡ 상태: {property.pbctCltrStatNm || '-'}
                     </Typography>
 
-                    {/* ✅ 기타 정보 (공고번호 + 물건번호 모두 복원) */}
+                    {/* 기타 정보 */}
                     <Box sx={{ mt: 1 }}>
                       <Typography
                         variant="caption"
@@ -301,7 +320,6 @@ const PropertyList = () => {
                       >
                         📋 공고번호: {property.plnmNo || '-'}
                       </Typography>
-
                       <Typography
                         variant="body2"
                         sx={{
@@ -314,7 +332,6 @@ const PropertyList = () => {
                         🧾 물건관리번호:{' '}
                         {property.cltrMnmtNo ? property.cltrMnmtNo : '-'}
                       </Typography>
-
                       <Typography
                         variant="caption"
                         display="block"
@@ -346,9 +363,7 @@ const PropertyList = () => {
         {/* 위로가기 버튼 */}
         {showScroll && (
           <Fab
-            onClick={() =>
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            }
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             aria-label="맨 위로"
             sx={{
               position: 'fixed',
@@ -367,6 +382,14 @@ const PropertyList = () => {
             <KeyboardArrowUp />
           </Fab>
         )}
+
+        {/* ✅ 이력조회 모달 */}
+        <HistoryModal
+          open={open}
+          onClose={() => setOpen(false)}
+          address={selectedAddress}
+          history={history}
+        />
       </Box>
     </Container>
   );

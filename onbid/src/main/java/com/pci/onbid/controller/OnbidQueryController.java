@@ -56,5 +56,23 @@ public class OnbidQueryController {
         return cleaned;
     }
 
+    @PostMapping("/history")
+    public List<HistoryDto> saveAndReturnHistory(@RequestBody Map<String, Object> body) {
+        Long itemId = ((Number) body.get("itemId")).longValue();
+        String address = (String) body.get("address");
+        String normalized = normalizeAddress(address);
+
+        // 1) 저장 시도
+        int inserted = service.insertHistoryIfNotExists(itemId, normalized);
+
+        // 2) 저장 후 조회 반환
+        List<HistoryDto> historyList = service.getHistoryByAddress(normalized);
+
+        System.out.printf("📦 이력 저장 완료 | 저장 성공: %d건 | 조회 반환: %d건%n",
+                inserted, historyList.size());
+
+        return historyList;
+    }
+
 
 }

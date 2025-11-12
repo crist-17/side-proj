@@ -8,11 +8,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class OnbidQueryService {
 
+    private final OnbidQueryMapper onbidQueryMapper;
     private final OnbidQueryMapper mapper;
 
     public List<AddressGroupedDto> getGroupedByAddress(int page, int size, String q) {
@@ -26,5 +28,11 @@ public class OnbidQueryService {
 
     public List<HistoryDto> getHistoryByAddress(String normalizedAddress) {
         return mapper.selectHistoryByAddress(normalizedAddress);
+    }
+
+    public int insertHistoryIfNotExists(Long itemId, String address) {
+        return onbidQueryMapper.insertHistoryIfNotExists(
+                Map.of("itemId", itemId, "address", address)
+        );
     }
 }

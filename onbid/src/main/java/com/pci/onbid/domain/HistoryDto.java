@@ -15,4 +15,5 @@ public class HistoryDto {
     private LocalDateTime pbctClsDtm;  // 공고종료일시
     private Long openPrice;            // 게시가격
     private String cltrSttsNm;         // 물건상태명
+    private String rawJson; // JSON 문자열로 저장할 때
 }

@@ -71,18 +71,18 @@
         ORDER BY id DESC
     </select>
 
-    <!-- ✅ [추가] 주소 기준 그룹 조회 -->
+    <!-- ✅ 주소 기준 그룹 조회 -->
     <select id="selectGroupedByAddress" resultType="com.pci.onbid.domain.AddressGroupedDto">
         SELECT
         TRIM(
         REGEXP_REPLACE(
-        REGEXP_REPLACE(ldnm_adrs, '\\\\[.*?\\\\]', ''),
-        '\\\\(.*?\\\\)', ''
+        REGEXP_REPLACE(ldnm_adrs, '\\[.*?\\]', ''),
+        '\\(.*?\\)', ''
         )
         ) AS address,
         COUNT(*) AS count
         FROM onbid_item
-        WHERE ldnm_adrs IS NOT NULL AND ldnm_adrs <> ''
+        WHERE ldnm_adrs IS NOT NULL AND ldnm_adrs != ''
         <if test="q != null and q != ''">
             AND ldnm_adrs LIKE CONCAT('%', #{q}, '%')
         </if>
@@ -91,25 +91,5 @@
         LIMIT #{size} OFFSET #{offset}
     </select>
 
-    <!-- ✅ [추가] 주소별 이력 조회 -->
-    <select id="selectHistoryByAddress" resultType="com.pci.onbid.domain.HistoryDto">
-        SELECT
-        h.cltr_hstr_no AS cltrHstrNo,
-        h.cltr_no AS cltrNo,
-        h.pbct_begn_dtm AS pbctBegnDtm,
-        h.pbct_cls_dtm AS pbctClsDtm,
-        h.open_price AS openPrice,
-        h.cltr_stts_nm AS cltrSttsNm
-        FROM onbid_history h
-        JOIN onbid_item i ON i.id = h.item_id
-        WHERE
-        TRIM(
-        REGEXP_REPLACE(
-        REGEXP_REPLACE(i.ldnm_adrs, '\\\\[.*?\\\\]', ''),
-        '\\\\(.*?\\\\)', ''
-        )
-        ) = #{address}
-        ORDER BY h.pbct_begn_dtm DESC, h.id DESC
-    </select>
 
 </mapper>

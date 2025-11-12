@@ -31,6 +31,12 @@ api.interceptors.response.use(
 export const onbidAPI = {
   getList: () => api.get('/api/onbid/list'),
   search: (keyword) => api.get(`/api/onbid/search?keyword=${encodeURIComponent(keyword)}`),
+
+   // ✅ 주소별 이력조회
+  getHistory: (address) =>
+    axios.get('/api/onbid/history', {
+      params: { address },
+    }),
 };
 
 // ── 북마크 (여기가 핵심: 이름/시그니처 통일)

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.pci.onbid.mapper.OnbidQueryMapper">
+
+
+    <!-- ✅ 이력 저장 (중복 방지: item_id + cltr_hstr_no 기준) -->
+    <insert id="insertHistoryIfNotExists" parameterType="map">
+        INSERT INTO onbid_history
+        (item_id, cltr_hstr_no, cltr_no, pbct_begn_dtm, pbct_cls_dtm,
+        open_price, cltr_stts_nm)
+        SELECT
+        i.id,
+        i.cltr_hstr_no,
+        i.cltr_no,
+        i.pbct_begn_dtm,
+        i.pbct_cls_dtm,
+        i.min_bid_prc,
+        i.pbct_cltr_stat_nm
+        FROM onbid_item i
+        WHERE i.id = #{itemId}
+        AND NOT EXISTS (
+        SELECT 1 FROM onbid_history h
+        WHERE h.item_id = i.id
+        AND h.cltr_hstr_no = i.cltr_hstr_no
+        )
+    </insert>
+
+
+    <!-- ✅ 주소 기준 그룹 조회 -->
+    <select id="selectGroupedByAddress" resultType="com.pci.onbid.domain.AddressGroupedDto">
+        SELECT
+        TRIM(
+        REGEXP_REPLACE(
+        REGEXP_REPLACE(ldnm_adrs, '\\[.*?\\]', ''),
+        '\\(.*?\\)', ''
+        )
+        ) AS address,
+        COUNT(*) AS count
+        FROM onbid_item
+        WHERE ldnm_adrs IS NOT NULL AND ldnm_adrs != ''
+        <if test="q != null and q != ''">
+            AND ldnm_adrs LIKE CONCAT('%', #{q}, '%')
+        </if>
+        GROUP BY address
+        ORDER BY count DESC, address ASC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <!-- ✅ 그룹 전체 개수 조회 -->
+    <select id="countGroupedByAddress" resultType="int">
+        SELECT COUNT(DISTINCT TRIM(
+        REGEXP_REPLACE(
+        REGEXP_REPLACE(ldnm_adrs, '\\[.*?\\]', ''),
+        '\\(.*?\\)', ''
+        )
+        ))
+        FROM onbid_item
+        WHERE ldnm_adrs IS NOT NULL AND ldnm_adrs != ''
+        <if test="q != null and q != ''">
+            AND ldnm_adrs LIKE CONCAT('%', #{q}, '%')
+        </if>
+    </select>
+
+    <!-- ✅ 주소별 이력 조회 -->
+    <select id="selectHistoryByAddress" resultType="com.pci.onbid.domain.HistoryDto">
+        SELECT
+        h.cltr_hstr_no AS cltrHstrNo,
+        h.cltr_no AS cltrNo,
+        h.pbct_begn_dtm AS pbctBegnDtm,
+        h.pbct_cls_dtm AS pbctClsDtm,
+        h.open_price AS openPrice,
+        h.cltr_stts_nm AS cltrSttsNm
+        FROM onbid_history h
+        JOIN onbid_item i ON i.id = h.item_id
+        WHERE TRIM(
+        REGEXP_REPLACE(
+        REGEXP_REPLACE(i.ldnm_adrs, '\\[.*?\\]', ''),
+        '\\(.*?\\)', ''
+        )
+        ) = #{address}
+        ORDER BY h.pbct_begn_dtm DESC, h.id DESC
+    </select>
+
+</mapper>
