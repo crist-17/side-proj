@@ -63,7 +63,7 @@ public class OnbidQueryController {
         String normalized = normalizeAddress(address);
 
         // 1) 저장 시도
-        int inserted = service.insertHistoryIfNotExists(itemId, normalized);
+        int inserted = service.insertHistoryIfNotExists(itemId);
 
         // 2) 저장 후 조회 반환
         List<HistoryDto> historyList = service.getHistoryByAddress(normalized);

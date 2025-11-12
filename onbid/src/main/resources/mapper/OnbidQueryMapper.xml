@@ -5,19 +5,17 @@
 
 <mapper namespace="com.pci.onbid.mapper.OnbidQueryMapper">
 
-
-    <!-- ✅ 이력 저장 (중복 방지: item_id + cltr_hstr_no 기준) -->
-    <insert id="insertHistoryIfNotExists" parameterType="map">
+    <!-- ✅ 이력 저장 (item_id 기반, 중복 방지) -->
+    <insert id="insertHistoryIfNotExists" parameterType="long">
         INSERT INTO onbid_history
-        (item_id, cltr_hstr_no, cltr_no, pbct_begn_dtm, pbct_cls_dtm,
-        open_price, cltr_stts_nm)
+        (item_id, cltr_hstr_no, cltr_no, pbct_begn_dtm, pbct_cls_dtm, open_price, cltr_stts_nm)
         SELECT
         i.id,
-        i.cltr_hstr_no,
-        i.cltr_no,
-        i.pbct_begn_dtm,
-        i.pbct_cls_dtm,
-        i.min_bid_prc,
+        i.cltr_hstr_no,     -- ✅ 진짜 이력번호 (API에서 온 값)
+        i.plnm_no,
+        STR_TO_DATE(i.pbct_begn_dtm, '%Y%m%d%H%i%s'),
+        STR_TO_DATE(i.pbct_cls_dtm, '%Y%m%d%H%i%s'),
+        CAST(i.min_bid_prc AS DECIMAL(18,2)),
         i.pbct_cltr_stat_nm
         FROM onbid_item i
         WHERE i.id = #{itemId}
@@ -29,7 +27,7 @@
     </insert>
 
 
-    <!-- ✅ 주소 기준 그룹 조회 -->
+    <!-- ✅ 주소별 그룹 조회 -->
     <select id="selectGroupedByAddress" resultType="com.pci.onbid.domain.AddressGroupedDto">
         SELECT
         TRIM(
@@ -49,7 +47,7 @@
         LIMIT #{size} OFFSET #{offset}
     </select>
 
-    <!-- ✅ 그룹 전체 개수 조회 -->
+    <!-- ✅ 그룹 총 개수 -->
     <select id="countGroupedByAddress" resultType="int">
         SELECT COUNT(DISTINCT TRIM(
         REGEXP_REPLACE(
@@ -64,7 +62,7 @@
         </if>
     </select>
 
-    <!-- ✅ 주소별 이력 조회 -->
+    <!-- ✅ 주소별 이력 조회 (부분일치 검색으로 수정) -->
     <select id="selectHistoryByAddress" resultType="com.pci.onbid.domain.HistoryDto">
         SELECT
         h.cltr_hstr_no AS cltrHstrNo,
@@ -80,7 +78,7 @@
         REGEXP_REPLACE(i.ldnm_adrs, '\\[.*?\\]', ''),
         '\\(.*?\\)', ''
         )
-        ) = #{address}
+        ) LIKE CONCAT('%', #{address}, '%')
         ORDER BY h.pbct_begn_dtm DESC, h.id DESC
     </select>
 

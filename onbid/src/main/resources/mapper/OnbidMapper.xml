@@ -24,17 +24,21 @@
         ORDER BY id DESC
     </select>
 
-    <!-- ✅ 단일 삽입 -->
-    <insert id="insert" parameterType="com.pci.onbid.domain.OnbidItem">
+    <!-- ✅ 단일 삽입 (id 자동 반환 설정 추가됨) -->
+    <insert id="insert"
+            parameterType="com.pci.onbid.domain.OnbidItem"
+            useGeneratedKeys="true"
+            keyProperty="id">
         INSERT INTO onbid_item
-        (plnm_no, cltr_mnmt_no, cltr_nm, ldnm_adrs, min_bid_prc,
+        (plnm_no, cltr_hstr_no, cltr_mnmt_no, cltr_nm, ldnm_adrs, min_bid_prc,
         apsl_ases_avg_amt, pbct_begn_dtm, pbct_cls_dtm,
         pbct_cltr_stat_nm, sido)
         VALUES
-        (#{plnmNo}, #{cltrMnmtNo}, #{cltrNm}, #{ldnmAdrs}, #{minBidPrc},
+        (#{plnmNo}, #{cltrHstrNo}, #{cltrMnmtNo}, #{cltrNm}, #{ldnmAdrs}, #{minBidPrc},
         #{apslAsesAvgAmt}, #{pbctBegnDtm}, #{pbctClsDtm},
         #{pbctCltrStatNm}, #{sido})
     </insert>
+
 
     <!-- ✅ 검색 기능 -->
     <select id="searchAdvanced" resultType="com.pci.onbid.domain.OnbidItem">
@@ -90,6 +94,5 @@
         ORDER BY count DESC, address ASC
         LIMIT #{size} OFFSET #{offset}
     </select>
-
 
 </mapper>

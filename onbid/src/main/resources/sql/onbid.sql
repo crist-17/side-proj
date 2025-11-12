@@ -28,8 +28,11 @@ CREATE TABLE onbid_item (
 DROP TABLE IF EXISTS onbid_item;
 SELECT * FROM onbid_item;
 ALTER TABLE onbid_item ADD UNIQUE (plnm_no);
+ALTER TABLE onbid_item ADD COLUMN cltr_hstr_no VARCHAR(50) AFTER cltr_mnmt_no;
+
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE onbid_item;
+TRUNCATE TABLE onbid_history;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ✅ 주소 중복 제거용 쿼리 (같은 주소가 여러 행으로 존재할 경우)
@@ -102,3 +105,14 @@ SHOW CREATE TABLE onbid_history;
 -- 2) bookmark   : 사용자별 즐겨찾기 정보
 -- 3) onbid_history : 주소별/공고별 상세 이력
 -- ========================================
+
+
+
+
+
+SELECT id FROM onbid_item LIMIT 1;
+
+INSERT INTO onbid_history (item_id, cltr_hstr_no, cltr_no, pbct_begn_dtm, pbct_cls_dtm, open_price, cltr_stts_nm)
+VALUES (1, 'H001', 'C001', '2025-01-01 10:00:00', '2025-01-10 17:00:00', 50000000, '입찰중');
+
+SELECT * FROM onbid_history ORDER BY id DESC LIMIT 5;

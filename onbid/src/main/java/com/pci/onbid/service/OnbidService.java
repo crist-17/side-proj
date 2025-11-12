@@ -23,6 +23,7 @@ import java.util.Scanner;
 public class OnbidService {
 
     private final OnbidMapper onbidMapper;
+    private final OnbidQueryService onbidQueryService; // ✅ 이력 자동 저장용 추가
 
     @Value("${onbid.base-url}")
     private String baseUrl;
@@ -31,7 +32,7 @@ public class OnbidService {
     private String serviceKey;
 
     /**
-     * ✅ 서울 + 경기 공매물건 데이터 수집 및 DB 저장
+     * ✅ 서울 + 경기 공매물건 데이터 수집 및 DB 저장 + 이력 자동 저장
      */
     public void fetchAndPrint() {
         try {
@@ -44,7 +45,7 @@ public class OnbidService {
             for (String region : regions) {
                 log.info("🏙️ 현재 지역 수집 중: {}", region);
 
-                for (int page = 1; page <= 2; page++) { // 테스트용 2페이지만 돌림
+                for (int page = 1; page <= 2; page++) { // 테스트용 2페이지만
                     try {
                         Thread.sleep(300);
                     } catch (InterruptedException e) {
@@ -64,7 +65,6 @@ public class OnbidService {
 
                     log.info("📡 요청 URL: {}", url);
 
-                    // ✅ (1) 실제 응답 문자열 출력
                     String xmlResponse = fetchRawResponse(url);
                     System.out.println("📦 원본 응답 데이터 (앞부분 500자):\n"
                             + xmlResponse.substring(0, Math.min(500, xmlResponse.length())) + "\n");
@@ -78,7 +78,6 @@ public class OnbidService {
                     log.info("📄 [{}] {}페이지 항목 수: {}", region, page, list.getLength());
                     totalFetched += list.getLength();
 
-                    // ✅ (2) 만약 0건이면 중단 로그
                     if (list.getLength() == 0) {
                         log.warn("⚠️ [{}] 페이지 {} : item 태그 없음 — 응답 구조 확인 필요", region, page);
                         continue;
@@ -98,6 +97,7 @@ public class OnbidService {
 
                         OnbidItem item = new OnbidItem();
                         item.setPlnmNo(getTagValue(e, "PLNM_NO"));
+                        item.setCltrHstrNo(getTagValue(e, "CLTR_HSTR_NO"));
                         item.setCltrMnmtNo(getTagValue(e, "CLTR_MNMT_NO"));
                         item.setCltrNm(cltrNm);
                         item.setLdnmAdrs(getTagValue(e, "LDNM_ADRS"));
@@ -106,6 +106,7 @@ public class OnbidService {
                         item.setPbctBegnDtm(getTagValue(e, "PBCT_BEGN_DTM"));
                         item.setPbctClsDtm(getTagValue(e, "PBCT_CLS_DTM"));
                         item.setPbctCltrStatNm(getTagValue(e, "PBCT_CLTR_STAT_NM"));
+
 
                         String address = item.getLdnmAdrs();
                         if (address != null && !address.isBlank()) {
@@ -119,13 +120,22 @@ public class OnbidService {
 
                         try {
                             int before = onbidMapper.findAll().size();
-                            onbidMapper.insert(item);
+                            onbidMapper.insert(item); // ✅ OnbidMapper.xml에 useGeneratedKeys="true" 설정 필요
+                            log.info("💡 DB 저장 후 item.id = {}", item.getId());
                             int after = onbidMapper.findAll().size();
 
                             if (after > before) {
                                 totalInserted++;
+
+                                // ✅ 방금 저장된 item의 id 기반으로 이력 자동 저장
+                                if (item.getId() != null) {
+                                    log.info("🧾 [이력저장 시도] item_id={}", item.getId());
+                                    int insertedHistory = onbidQueryService.insertHistoryIfNotExists(item.getId());
+                                    log.info("🧾 [이력저장] item_id={} → {}건 삽입됨", item.getId(), insertedHistory);
+                                }
+
                             } else {
-                                totalSkipped++;
+                                log.warn("⚠️ item.getId()가 null입니다 → useGeneratedKeys 설정 확인 필요");
                             }
                         } catch (Exception ex) {
                             totalSkipped++;
