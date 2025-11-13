@@ -22,6 +22,7 @@ public class OnbidQueryService {
         return mapper.selectGroupedByAddress(offset, size, q);
     }
 
+    /** ✅ 그룹 총 개수 */
     public int getGroupedTotalCount(String q) {
         return mapper.countGroupedByAddress(q);
     }

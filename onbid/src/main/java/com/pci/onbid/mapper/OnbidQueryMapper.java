@@ -10,15 +10,19 @@ import java.util.List;
 @Mapper
 public interface OnbidQueryMapper {
 
+    /** ✅ 중복 방지 이력 저장 */
     int insertHistoryIfNotExists(@Param("itemId") Long itemId);
 
+    /** ✅ 주소 그룹 조회 */
     List<AddressGroupedDto> selectGroupedByAddress(
             @Param("offset") int offset,
             @Param("size") int size,
             @Param("q") String q
     );
 
+    /** ✅ 주소 그룹 총 개수 */
     int countGroupedByAddress(@Param("q") String q);
 
+    /** ✅ 주소별 이력 조회 */
     List<HistoryDto> selectHistoryByAddress(@Param("address") String address);
 }

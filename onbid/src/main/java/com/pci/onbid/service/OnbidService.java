@@ -6,7 +6,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.w3c.dom.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
@@ -23,7 +25,7 @@ import java.util.Scanner;
 public class OnbidService {
 
     private final OnbidMapper onbidMapper;
-    private final OnbidQueryService onbidQueryService; // ✅ 이력 자동 저장용 추가
+    private final OnbidQueryService onbidQueryService;  // ✅ 이력 자동 저장용
 
     @Value("${onbid.base-url}")
     private String baseUrl;
@@ -45,7 +47,7 @@ public class OnbidService {
             for (String region : regions) {
                 log.info("🏙️ 현재 지역 수집 중: {}", region);
 
-                for (int page = 1; page <= 2; page++) { // 테스트용 2페이지만
+                for (int page = 1; page <= 2; page++) { // 테스트용: 2페이지만
                     try {
                         Thread.sleep(300);
                     } catch (InterruptedException e) {
@@ -65,6 +67,7 @@ public class OnbidService {
 
                     log.info("📡 요청 URL: {}", url);
 
+                    // ✅ API 응답 문자열
                     String xmlResponse = fetchRawResponse(url);
                     System.out.println("📦 원본 응답 데이터 (앞부분 500자):\n"
                             + xmlResponse.substring(0, Math.min(500, xmlResponse.length())) + "\n");
@@ -88,7 +91,7 @@ public class OnbidService {
                         String cltrNm = getTagValue(e, "CLTR_NM");
                         if (cltrNm == null || cltrNm.isBlank()) continue;
 
-                        // 🔹 불필요한 숫자·기호 제거
+                        // 🔹 물건명 정리 (숫자/기호 정리)
                         cltrNm = cltrNm.replaceAll("\\b\\d{1,3}-\\d{1,3}\\b", "")
                                 .replaceAll("\\b\\d{1,3}\\b", "")
                                 .replaceAll("[-,]", "")
@@ -97,8 +100,8 @@ public class OnbidService {
 
                         OnbidItem item = new OnbidItem();
                         item.setPlnmNo(getTagValue(e, "PLNM_NO"));
-                        item.setCltrHstrNo(getTagValue(e, "CLTR_HSTR_NO"));
                         item.setCltrMnmtNo(getTagValue(e, "CLTR_MNMT_NO"));
+                        item.setCltrHstrNo(getTagValue(e, "CLTR_HSTR_NO"));  // ⭐ 이력번호
                         item.setCltrNm(cltrNm);
                         item.setLdnmAdrs(getTagValue(e, "LDNM_ADRS"));
                         item.setMinBidPrc(getTagValue(e, "MIN_BID_PRC"));
@@ -107,7 +110,6 @@ public class OnbidService {
                         item.setPbctClsDtm(getTagValue(e, "PBCT_CLS_DTM"));
                         item.setPbctCltrStatNm(getTagValue(e, "PBCT_CLTR_STAT_NM"));
 
-
                         String address = item.getLdnmAdrs();
                         if (address != null && !address.isBlank()) {
                             item.setSido(address.split(" ")[0]);
@@ -115,31 +117,34 @@ public class OnbidService {
                             item.setSido(region);
                         }
 
-                        // ✅ (3) 각 아이템 로그
                         log.debug("📍 물건명: {} | 주소: {}", cltrNm, item.getLdnmAdrs());
 
                         try {
                             int before = onbidMapper.findAll().size();
-                            onbidMapper.insert(item); // ✅ OnbidMapper.xml에 useGeneratedKeys="true" 설정 필요
+
+                            onbidMapper.insert(item);    // useGeneratedKeys="true" 로 id 채워짐
                             log.info("💡 DB 저장 후 item.id = {}", item.getId());
                             int after = onbidMapper.findAll().size();
 
                             if (after > before) {
                                 totalInserted++;
 
-                                // ✅ 방금 저장된 item의 id 기반으로 이력 자동 저장
                                 if (item.getId() != null) {
                                     log.info("🧾 [이력저장 시도] item_id={}", item.getId());
-                                    int insertedHistory = onbidQueryService.insertHistoryIfNotExists(item.getId());
-                                    log.info("🧾 [이력저장] item_id={} → {}건 삽입됨", item.getId(), insertedHistory);
+                                    int insertedHistory =
+                                            onbidQueryService.insertHistoryIfNotExists(item.getId());
+                                    log.info("🧾 [이력저장] item_id={} → {}건 삽입됨",
+                                            item.getId(), insertedHistory);
+                                } else {
+                                    log.warn("⚠️ item.getId() 가 null 입니다. useGeneratedKeys 설정 확인 필요");
                                 }
 
                             } else {
-                                log.warn("⚠️ item.getId()가 null입니다 → useGeneratedKeys 설정 확인 필요");
+                                totalSkipped++;
                             }
                         } catch (Exception ex) {
                             totalSkipped++;
-                            log.warn("⚠️ 중복/삽입 실패: {}", cltrNm);
+                            log.warn("⚠️ 중복/삽입 실패: {}", cltrNm, ex);
                         }
                     }
 
@@ -189,7 +194,7 @@ public class OnbidService {
     }
 
     /**
-     * ✅ 전체 목록 조회
+     * ✅ 전체 목록 조회 (프론트 /api/onbid/list 용)
      */
     public List<OnbidItem> getAllItems() {
         return onbidMapper.findAll();
@@ -198,7 +203,8 @@ public class OnbidService {
     /**
      * ✅ 검색 (AND 조건 기반)
      */
-    public List<OnbidItem> searchAdvanced(String region, String category, String status, Long minPrice, Long maxPrice) {
+    public List<OnbidItem> searchAdvanced(String region, String category,
+                                          String status, Long minPrice, Long maxPrice) {
         return onbidMapper.searchAdvanced(region, category, status, minPrice, maxPrice);
     }
 }

@@ -5,6 +5,8 @@
 
 <mapper namespace="com.pci.onbid.mapper.OnbidQueryMapper">
 
+
+
     <!-- ✅ 이력 저장 (item_id 기반, 중복 방지) -->
     <insert id="insertHistoryIfNotExists" parameterType="long">
         INSERT INTO onbid_history

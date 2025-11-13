@@ -11,6 +11,7 @@
         id,
         plnm_no AS plnmNo,
         cltr_mnmt_no AS cltrMnmtNo,
+        cltr_hstr_no AS cltrHstrNo,
         cltr_nm AS cltrNm,
         ldnm_adrs AS ldnmAdrs,
         min_bid_prc AS minBidPrc,
@@ -24,21 +25,20 @@
         ORDER BY id DESC
     </select>
 
-    <!-- ✅ 단일 삽입 (id 자동 반환 설정 추가됨) -->
+    <!-- ⭐ 단일 삽입 (중복 제거 version) -->
     <insert id="insert"
             parameterType="com.pci.onbid.domain.OnbidItem"
             useGeneratedKeys="true"
             keyProperty="id">
         INSERT INTO onbid_item
-        (plnm_no, cltr_hstr_no, cltr_mnmt_no, cltr_nm, ldnm_adrs, min_bid_prc,
-        apsl_ases_avg_amt, pbct_begn_dtm, pbct_cls_dtm,
+        (plnm_no, cltr_mnmt_no, cltr_hstr_no, cltr_nm, ldnm_adrs,
+        min_bid_prc, apsl_ases_avg_amt, pbct_begn_dtm, pbct_cls_dtm,
         pbct_cltr_stat_nm, sido)
         VALUES
-        (#{plnmNo}, #{cltrHstrNo}, #{cltrMnmtNo}, #{cltrNm}, #{ldnmAdrs}, #{minBidPrc},
-        #{apslAsesAvgAmt}, #{pbctBegnDtm}, #{pbctClsDtm},
+        (#{plnmNo}, #{cltrMnmtNo}, #{cltrHstrNo}, #{cltrNm}, #{ldnmAdrs},
+        #{minBidPrc}, #{apslAsesAvgAmt}, #{pbctBegnDtm}, #{pbctClsDtm},
         #{pbctCltrStatNm}, #{sido})
     </insert>
-
 
     <!-- ✅ 검색 기능 -->
     <select id="searchAdvanced" resultType="com.pci.onbid.domain.OnbidItem">
