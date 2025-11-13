@@ -46,8 +46,7 @@ JOIN onbid_item t2
 ALTER TABLE onbid_item ADD CONSTRAINT uq_onbid_unique UNIQUE (ldnm_adrs);
 ALTER TABLE onbid_item ADD UNIQUE (plnm_no);
 ALTER TABLE onbid_item DROP INDEX uq_onbid_plnm;
-ALTER TABLE onbid_item DROP INDEX uq_onbid_unique;
-ALTER TABLE onbid_item DROP INDEX plnm_no;
+
 
 
 -- ========================================
@@ -107,7 +106,9 @@ SHOW CREATE TABLE onbid_history;
 -- ========================================
 
 
-
+SELECT id, plnm_no, cltr_mnmt_no, cltr_hstr_no, ldnm_adrs
+FROM onbid_item
+WHERE cltr_mnmt_no = '2025-03630-003';
 
 
 SELECT id FROM onbid_item LIMIT 1;
