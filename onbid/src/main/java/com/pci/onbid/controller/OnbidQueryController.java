@@ -15,10 +15,7 @@ public class OnbidQueryController {
 
     private final OnbidQueryService service;
 
-    // ----------------------------------------------------------
-    // ✅ 1) 주소 기준 그룹 목록
-    // 예: /api/onbid/grouped?page=1&size=30&q=남양주
-    // ----------------------------------------------------------
+    /** ✅ 주소 기준 그룹 리스트 */
     @GetMapping("/grouped")
     public Map<String, Object> grouped(
             @RequestParam(defaultValue = "1") int page,
@@ -33,48 +30,33 @@ public class OnbidQueryController {
         res.put("size", size);
         res.put("total", total);
         res.put("data", list);
-
         return res;
     }
 
-    // ----------------------------------------------------------
-    // ✅ 2) 주소별 이력 조회
-    // 예: /api/onbid/history?address=경기도 남양주시 삼패동 106
-    // ----------------------------------------------------------
+    /** ✅ 주소별 이력 조회 */
     @GetMapping("/history")
     public List<HistoryDto> historyByAddress(@RequestParam String address) {
         String normalized = normalizeAddress(address);
         return service.getHistoryByAddress(normalized);
     }
 
-    // ----------------------------------------------------------
-    // 내부 유틸 — 주소 정규화
-    // ----------------------------------------------------------
+    /** 내부 유틸: 주소 정규화 */
     private String normalizeAddress(String raw) {
         if (raw == null) return "";
-        return raw
-                .replaceAll("\\[.*?\\]", "")
+        return raw.replaceAll("\\[.*?\\]", "")
                 .replaceAll("\\(.*?\\)", "")
                 .replaceAll("\\s{2,}", " ")
                 .trim();
     }
 
-    // ----------------------------------------------------------
-    // ✅ 3) 주소 + itemId 기반 저장 & 조회
-    // 프론트가 특정 카드 클릭 → 이력 저장 → 전체 이력 조회
-    // ----------------------------------------------------------
+    /** 프론트 요청으로 이력 저장 + 즉시 반환 */
     @PostMapping("/history")
     public List<HistoryDto> saveAndReturnHistory(@RequestBody Map<String, Object> body) {
-
         Long itemId = ((Number) body.get("itemId")).longValue();
         String address = (String) body.get("address");
-
         String normalized = normalizeAddress(address);
 
-        // 1) 저장 시도
         int inserted = service.insertHistoryIfNotExists(itemId);
-
-        // 2) 저장 후 조회 반환
         List<HistoryDto> historyList = service.getHistoryByAddress(normalized);
 
         System.out.printf("📦 이력 저장 완료 | 저장 성공: %d건 | 조회 반환: %d건%n",

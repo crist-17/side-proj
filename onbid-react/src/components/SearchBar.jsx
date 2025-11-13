@@ -9,6 +9,7 @@ const SearchBar = ({ setProperties }) => {
     status: '',
     minPrice: '',
     maxPrice: '',
+    plnmNo: '',
   });
 
   // 입력값 변경 처리
@@ -17,29 +18,29 @@ const SearchBar = ({ setProperties }) => {
   };
 
   // 검색 실행
-const handleSearch = async () => {
-  try {
-    const params = Object.fromEntries(
-      Object.entries(filters).filter(([_, v]) => v !== '')
-    );
+  const handleSearch = async () => {
+    try {
+      const params = Object.fromEntries(
+        Object.entries(filters).filter(([_, v]) => v !== '')
+      );
 
-    const res = await axios.get('http://localhost:8092/api/onbid/search', { params })
+      const res = await axios.get(
+        'http://localhost:8092/api/onbid/search',
+        { params }
+      );
 
-
-    // ✅ 배열인지 확인 후에만 set
-    if (Array.isArray(res.data)) {
-      setProperties(res.data);
-    } else if (res.data && Array.isArray(res.data.data)) {
-      setProperties(res.data.data);
-    } else {
-      console.warn('예상치 못한 응답 형식:', res.data);
+      if (Array.isArray(res.data)) {
+        setProperties(res.data);
+      } else if (res.data?.data && Array.isArray(res.data.data)) {
+        setProperties(res.data.data);
+      } else {
+        setProperties([]);
+      }
+    } catch (error) {
+      console.error('검색 실패:', error);
       setProperties([]);
     }
-  } catch (error) {
-    console.error('검색 실패:', error);
-    setProperties([]);
-  }
-};
+  };
 
   // UI 구성
   return (
@@ -53,24 +54,27 @@ const handleSearch = async () => {
           onChange={handleChange}
         />
       </Grid>
+
       <Grid item xs={2}>
         <TextField
           name="category"
-          label="용도 (예: 토지, 건물)"
+          label="용도 (예: 건물, 토지)"
           size="small"
           fullWidth
           onChange={handleChange}
         />
       </Grid>
+
       <Grid item xs={2}>
         <TextField
           name="status"
-          label="진행상태 (예: 가능, 준비, 종료)"
+          label="상태 (입찰중, 낙찰)"
           size="small"
           fullWidth
           onChange={handleChange}
         />
       </Grid>
+
       <Grid item xs={2}>
         <TextField
           name="minPrice"
@@ -80,6 +84,7 @@ const handleSearch = async () => {
           onChange={handleChange}
         />
       </Grid>
+
       <Grid item xs={2}>
         <TextField
           name="maxPrice"
@@ -89,8 +94,27 @@ const handleSearch = async () => {
           onChange={handleChange}
         />
       </Grid>
+
+      {/* 🔥 공고번호 입력칸 따로 분리 */}
       <Grid item xs={2}>
-        <Button variant="contained" color="primary" fullWidth onClick={handleSearch}>
+        <TextField
+          name="plnmNo"
+          label="공고번호"
+          size="small"
+          fullWidth
+          value={filters.plnmNo}
+          onChange={handleChange}
+        />
+      </Grid>
+
+      {/* 🔍 검색 버튼 */}
+      <Grid item xs={2}>
+        <Button
+          variant="contained"
+          fullWidth
+          color="primary"
+          onClick={handleSearch}
+        >
           검색
         </Button>
       </Grid>

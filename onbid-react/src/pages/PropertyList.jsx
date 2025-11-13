@@ -27,17 +27,17 @@ const PropertyList = () => {
 
   // ✅ 카드 클릭 → 이력조회 실행
   const handleCardClick = async (address) => {
-     try {
-    setSelectedAddress(address);
-    const res = await onbidAPI.getHistory(address);
-    console.log('📦 이력조회 응답 데이터:', res.data); // ✅ 응답 확인
-    const data = Array.isArray(res.data) ? res.data : [];
-    setHistory(data);
-    setOpen(true);
-  } catch (err) {
-    console.error('이력 조회 실패:', err);
-  }
-};
+    try {
+      setSelectedAddress(address);
+      const res = await onbidAPI.getHistory(address);
+      console.log('📦 이력조회 응답 데이터:', res.data); // ✅ 응답 확인
+      const data = Array.isArray(res.data) ? res.data : [];
+      setHistory(data);
+      setOpen(true);
+    } catch (err) {
+      console.error('이력 조회 실패:', err);
+    }
+  };
 
   // ✅ 날짜 포맷 함수
   const formatBidDate = (dateStr) => {
@@ -236,6 +236,7 @@ const PropertyList = () => {
                                     href={mapUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}   // ⭐ 카드 클릭 막기
                                     title={`${fullAddress} (카카오맵에서 보기)`}
                                     style={{
                                       textDecoration: 'none',
@@ -302,8 +303,8 @@ const PropertyList = () => {
                           property.pbctCltrStatNm === '입찰중'
                             ? 'success.main'
                             : property.pbctCltrStatNm === '낙찰'
-                            ? 'error.main'
-                            : '#333',
+                              ? 'error.main'
+                              : '#333',
                         fontWeight: 'bold',
                         mt: 1,
                       }}

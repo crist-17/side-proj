@@ -110,6 +110,7 @@ public class OnbidService {
                         item.setPbctClsDtm(getTagValue(e, "PBCT_CLS_DTM"));
                         item.setPbctCltrStatNm(getTagValue(e, "PBCT_CLTR_STAT_NM"));
 
+                        // 시도 추출
                         String address = item.getLdnmAdrs();
                         if (address != null && !address.isBlank()) {
                             item.setSido(address.split(" ")[0]);
@@ -117,28 +118,22 @@ public class OnbidService {
                             item.setSido(region);
                         }
 
-                        log.debug("📍 물건명: {} | 주소: {}", cltrNm, item.getLdnmAdrs());
-
                         try {
                             int before = onbidMapper.findAll().size();
 
-                            onbidMapper.insert(item);    // useGeneratedKeys="true" 로 id 채워짐
-                            log.info("💡 DB 저장 후 item.id = {}", item.getId());
+                            onbidMapper.insert(item);    // useGeneratedKeys="true" 로 id 자동 채워짐
                             int after = onbidMapper.findAll().size();
 
                             if (after > before) {
                                 totalInserted++;
 
                                 if (item.getId() != null) {
-                                    log.info("🧾 [이력저장 시도] item_id={}", item.getId());
+                                    // ⭐ 이력 자동 저장
                                     int insertedHistory =
                                             onbidQueryService.insertHistoryIfNotExists(item.getId());
                                     log.info("🧾 [이력저장] item_id={} → {}건 삽입됨",
                                             item.getId(), insertedHistory);
-                                } else {
-                                    log.warn("⚠️ item.getId() 가 null 입니다. useGeneratedKeys 설정 확인 필요");
                                 }
-
                             } else {
                                 totalSkipped++;
                             }
@@ -160,9 +155,7 @@ public class OnbidService {
         }
     }
 
-    /**
-     * ✅ API 응답을 문자열로 직접 가져오기
-     */
+    /** ✅ API 결과 문자열로 가져오기 */
     private String fetchRawResponse(String urlStr) {
         StringBuilder result = new StringBuilder();
         try {
@@ -182,9 +175,7 @@ public class OnbidService {
         return result.toString();
     }
 
-    /**
-     * ✅ XML 태그값 추출
-     */
+    /** ✅ XML 태그값 추출 */
     private String getTagValue(Element e, String tag) {
         NodeList nodeList = e.getElementsByTagName(tag);
         if (nodeList.getLength() > 0 && nodeList.item(0).getTextContent() != null) {
@@ -193,18 +184,57 @@ public class OnbidService {
         return null;
     }
 
-    /**
-     * ✅ 전체 목록 조회 (프론트 /api/onbid/list 용)
-     */
+    /** ✅ 전체 목록 조회 (프론트 /api/onbid/list 용) */
     public List<OnbidItem> getAllItems() {
         return onbidMapper.findAll();
     }
 
-    /**
-     * ✅ 검색 (AND 조건 기반)
-     */
+    /** ✅ 검색 (AND 조건 기반) */
     public List<OnbidItem> searchAdvanced(String region, String category,
-                                          String status, Long minPrice, Long maxPrice) {
-        return onbidMapper.searchAdvanced(region, category, status, minPrice, maxPrice);
+                                          String status, Long minPrice, Long maxPrice, String plnmNo) {
+        return onbidMapper.searchAdvanced(region, category, status, minPrice, maxPrice, plnmNo);
     }
+
+    public void testSingleHistory() {
+        try {
+            String cltrMnmtNo = "2025-03630-003"; // 테스트용
+            String encodedNo = URLEncoder.encode(cltrMnmtNo, StandardCharsets.UTF_8);
+
+            String url = baseUrl + "/getKamcoPbctCltrHstrList"
+                    + "?serviceKey=" + serviceKey
+                    + "&numOfRows=50"
+                    + "&pageNo=1"
+                    + "&CLTR_MNMT_NO=" + encodedNo;
+
+            log.info("📡 테스트 요청 URL: {}", url);
+
+            String xml = fetchRawResponse(url);
+
+            Document doc = DocumentBuilderFactory.newInstance()
+                    .newDocumentBuilder()
+                    .parse(new java.io.ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+            doc.getDocumentElement().normalize();
+
+            NodeList list = doc.getElementsByTagName("item");
+            log.info("📄 이력 개수: {}", list.getLength());
+
+            // ====== 결과 출력 ======
+            for (int i = 0; i < list.getLength(); i++) {
+                Element e = (Element) list.item(i);
+                String hstrNo = getTagValue(e, "CLTR_HSTR_NO");
+                String plnmNo = getTagValue(e, "PLNM_NO");
+                String begn = getTagValue(e, "PBCT_BEGN_DTM");
+                String cls = getTagValue(e, "PBCT_CLS_DTM");
+                String stts = getTagValue(e, "PBCT_CLTR_STAT_NM");
+
+                log.info("▶ 회차 {} | 공고 {} | 시작 {} | 종료 {} | 상태 {}",
+                        hstrNo, plnmNo, begn, cls, stts);
+            }
+
+        } catch (Exception e) {
+            log.error("❌ 테스트 중 오류", e);
+        }
+    }
+
 }

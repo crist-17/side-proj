@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+
+//CLTR_MNMT_NO=2025-03630-003
 @Tag( // 📘 컨트롤러 전체 설명
         name = "온비드 API",
         description = """
@@ -67,9 +69,10 @@ public class OnbidController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long minPrice,
-            @RequestParam(required = false) Long maxPrice
+            @RequestParam(required = false) Long maxPrice,
+            @RequestParam(required = false) String plnmNo
     ) {
-        return onbidService.searchAdvanced(region, category, status, minPrice, maxPrice);
+        return onbidService.searchAdvanced(region, category, status, minPrice, maxPrice, plnmNo);
     }
 
     // ✅ (4) Swagger 연결 테스트용
@@ -81,4 +84,11 @@ public class OnbidController {
     public String hello() {
         return "Swagger 테스트 성공 ✅";
     }
+
+    @GetMapping("/test-history")
+    public String testHistory() {
+        onbidService.testSingleHistory();
+        return "OK - 콘솔 로그 확인하세요.";
+    }
+
 }

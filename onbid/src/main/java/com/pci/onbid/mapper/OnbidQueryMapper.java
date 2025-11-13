@@ -10,7 +10,7 @@ import java.util.List;
 @Mapper
 public interface OnbidQueryMapper {
 
-    /** ✅ 중복 방지 이력 저장 */
+    /** ✅ 이력 저장 */
     int insertHistoryIfNotExists(@Param("itemId") Long itemId);
 
     /** ✅ 주소 그룹 조회 */
