@@ -13,6 +13,7 @@ import BookmarkButton from '../components/BookmarkButton';
 import SearchBar from '../components/SearchBar';
 import HistoryModal from '../components/HistoryModal';
 import { onbidAPI } from '../services/api';
+import RefreshButton from '../components/RefreshButton';   // ⭐ 추가
 
 const PropertyList = () => {
   const [properties, setProperties] = useState([]);
@@ -20,17 +21,16 @@ const PropertyList = () => {
   const [error, setError] = useState(null);
   const [showScroll, setShowScroll] = useState(false);
 
-  // ✅ 모달 관련 상태
+  // 모달 상태
   const [open, setOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState('');
   const [history, setHistory] = useState([]);
 
-  // ✅ 카드 클릭 → 이력조회 실행
+  // 카드 클릭 → 이력조회
   const handleCardClick = async (address) => {
     try {
       setSelectedAddress(address);
       const res = await onbidAPI.getHistory(address);
-      console.log('📦 이력조회 응답 데이터:', res.data); // ✅ 응답 확인
       const data = Array.isArray(res.data) ? res.data : [];
       setHistory(data);
       setOpen(true);
@@ -39,7 +39,7 @@ const PropertyList = () => {
     }
   };
 
-  // ✅ 날짜 포맷 함수
+  // 날짜 포맷
   const formatBidDate = (dateStr) => {
     if (!dateStr) return '-';
     const clean = dateStr.replace(/\D/g, '');
@@ -51,14 +51,14 @@ const PropertyList = () => {
     return `${year}-${month}-${day} ${hour}:${minute}`;
   };
 
-  // ✅ 스크롤 감지
+  // 스크롤 감지
   useEffect(() => {
     const handleScroll = () => setShowScroll(window.scrollY > 300);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // ✅ 온비드 API 전체 조회
+  // 온비드 목록 조회
   const fetchProperties = async () => {
     try {
       setLoading(true);
@@ -74,7 +74,7 @@ const PropertyList = () => {
     }
   };
 
-  // ✅ 초기 로딩
+  // 초기 로딩
   useEffect(() => {
     fetchProperties();
   }, []);
@@ -85,6 +85,7 @@ const PropertyList = () => {
         ⏳ 로딩중...
       </Typography>
     );
+
   if (error)
     return (
       <Typography align="center" color="error">
@@ -105,7 +106,7 @@ const PropertyList = () => {
       }}
     >
       <Box sx={{ mb: 3 }}>
-        {/* 제목 + 새로고침 */}
+        {/* 제목 + 기존 새로고침 */}
         <Box
           sx={{
             display: 'flex',
@@ -117,19 +118,26 @@ const PropertyList = () => {
           <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#fff' }}>
             공매물건 목록
           </Typography>
+
+          {/* 기존 새로고침 버튼 (유지) */}
           <Button
             onClick={fetchProperties}
             variant="outlined"
             sx={{ color: '#fff', borderColor: '#fff' }}
           >
-            새로고침
+            목록보기
           </Button>
         </Box>
 
-        {/* ✅ 검색창 */}
+        {/* ⭐ 네가 요청한 위치: 기존 새로고침 “바로 밑에” 실시간 API 버튼 */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          <RefreshButton onRefresh={fetchProperties} />
+        </Box>
+
+        {/* 검색창 */}
         <SearchBar setProperties={setProperties} />
 
-        {/* ✅ 카드 목록 */}
+        {/* 카드 목록 */}
         <Box
           sx={{
             display: 'grid',
@@ -146,7 +154,7 @@ const PropertyList = () => {
               return (
                 <Card
                   key={`${property.plnmNo}-${property.id || idx}`}
-                  onClick={() => handleCardClick(property.ldnmAdrs)} // ✅ 카드 클릭 이벤트
+                  onClick={() => handleCardClick(property.ldnmAdrs)}
                   sx={{
                     cursor: 'pointer',
                     width: '300px',
@@ -164,7 +172,6 @@ const PropertyList = () => {
                   }}
                 >
                   <CardContent sx={{ p: 2.5 }}>
-                    {/* ✅ 물건명 + 중앙정렬된 밑줄 이모지 */}
                     {(() => {
                       try {
                         const name = (property.cltrNm || '이름없음')
@@ -236,7 +243,7 @@ const PropertyList = () => {
                                     href={mapUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    onClick={(e) => e.stopPropagation()}   // ⭐ 카드 클릭 막기
+                                    onClick={(e) => e.stopPropagation()}
                                     title={`${fullAddress} (카카오맵에서 보기)`}
                                     style={{
                                       textDecoration: 'none',
@@ -266,12 +273,10 @@ const PropertyList = () => {
                       }
                     })()}
 
-                    {/* 주소 */}
                     <Typography sx={{ color: '#333', mb: 1, mt: 1 }}>
                       📍 {property.ldnmAdrs || '-'}
                     </Typography>
 
-                    {/* 가격 */}
                     <Box sx={{ my: 1 }}>
                       <Typography sx={{ fontWeight: 'bold', color: '#1976d2' }}>
                         최저입찰가:{' '}
@@ -289,13 +294,11 @@ const PropertyList = () => {
                       </Typography>
                     </Box>
 
-                    {/* 입찰기간 */}
                     <Typography variant="body2" sx={{ color: '#333' }}>
                       📅 입찰기간: {formatBidDate(property.pbctBegnDtm)} ~{' '}
                       {formatBidDate(property.pbctClsDtm)}
                     </Typography>
 
-                    {/* 상태 */}
                     <Typography
                       variant="body2"
                       sx={{
@@ -312,7 +315,6 @@ const PropertyList = () => {
                       ⚡ 상태: {property.pbctCltrStatNm || '-'}
                     </Typography>
 
-                    {/* 기타 정보 */}
                     <Box sx={{ mt: 1 }}>
                       <Typography
                         variant="caption"
@@ -321,6 +323,7 @@ const PropertyList = () => {
                       >
                         📋 공고번호: {property.plnmNo || '-'}
                       </Typography>
+
                       <Typography
                         variant="body2"
                         sx={{
@@ -333,6 +336,7 @@ const PropertyList = () => {
                         🧾 물건관리번호:{' '}
                         {property.cltrMnmtNo ? property.cltrMnmtNo : '-'}
                       </Typography>
+
                       <Typography
                         variant="caption"
                         display="block"
@@ -346,7 +350,6 @@ const PropertyList = () => {
                     </Box>
                   </CardContent>
 
-                  {/* 북마크 버튼 */}
                   <Box
                     sx={{
                       position: 'absolute',
@@ -384,7 +387,7 @@ const PropertyList = () => {
           </Fab>
         )}
 
-        {/* ✅ 이력조회 모달 */}
+        {/* 이력조회 모달 */}
         <HistoryModal
           open={open}
           onClose={() => setOpen(false)}
