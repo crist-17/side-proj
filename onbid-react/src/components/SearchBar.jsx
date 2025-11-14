@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Grid } from '@mui/material';
+import { TextField, Button, Grid, MenuItem } from '@mui/material';
 import axios from 'axios';
 
 const SearchBar = ({ setProperties }) => {
@@ -12,12 +12,10 @@ const SearchBar = ({ setProperties }) => {
     plnmNo: '',
   });
 
-  // 입력값 변경 처리
   const handleChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
-  // 검색 실행
   const handleSearch = async () => {
     try {
       const params = Object.fromEntries(
@@ -31,7 +29,7 @@ const SearchBar = ({ setProperties }) => {
 
       if (Array.isArray(res.data)) {
         setProperties(res.data);
-      } else if (res.data?.data && Array.isArray(res.data.data)) {
+      } else if (Array.isArray(res.data?.data)) {
         setProperties(res.data.data);
       } else {
         setProperties([]);
@@ -42,20 +40,32 @@ const SearchBar = ({ setProperties }) => {
     }
   };
 
-  // UI 구성
   return (
     <Grid container spacing={2} sx={{ mb: 3 }}>
-      <Grid item xs={2}>
+
+      {/* ⭐ 지역 드롭다운 */}
+      <Grid item xs={4}>
         <TextField
           name="region"
-          label="지역 (예: 서울)"
+          label="지역 선택"
           size="small"
           fullWidth
+          select
+          value={filters.region}
           onChange={handleChange}
-        />
+          sx={{
+            minWidth: 220, 
+            width: '100%',
+          }}
+        >
+          <MenuItem value="">전체</MenuItem>
+          <MenuItem value="서울">서울특별시</MenuItem>
+          <MenuItem value="경기">경기도</MenuItem>
+        </TextField>
       </Grid>
 
-      <Grid item xs={2}>
+      {/* 용도 */}
+      <Grid item xs={4}>
         <TextField
           name="category"
           label="용도 (예: 건물, 토지)"
@@ -65,7 +75,8 @@ const SearchBar = ({ setProperties }) => {
         />
       </Grid>
 
-      <Grid item xs={2}>
+      {/* 상태 */}
+      <Grid item xs={4}>
         <TextField
           name="status"
           label="상태 (입찰중, 낙찰)"
@@ -75,7 +86,8 @@ const SearchBar = ({ setProperties }) => {
         />
       </Grid>
 
-      <Grid item xs={2}>
+      {/* 최저입찰가 */}
+      <Grid item xs={4}>
         <TextField
           name="minPrice"
           label="최저입찰가 이상"
@@ -85,7 +97,8 @@ const SearchBar = ({ setProperties }) => {
         />
       </Grid>
 
-      <Grid item xs={2}>
+      {/* 최대입찰가 */}
+      <Grid item xs={4}>
         <TextField
           name="maxPrice"
           label="최저입찰가 이하"
@@ -95,8 +108,8 @@ const SearchBar = ({ setProperties }) => {
         />
       </Grid>
 
-      {/* 🔥 공고번호 입력칸 따로 분리 */}
-      <Grid item xs={2}>
+      {/* 공고번호 */}
+      <Grid item xs={4}>
         <TextField
           name="plnmNo"
           label="공고번호"
@@ -107,17 +120,18 @@ const SearchBar = ({ setProperties }) => {
         />
       </Grid>
 
-      {/* 🔍 검색 버튼 */}
-      <Grid item xs={2}>
+      {/* 검색 버튼 */}
+      <Grid item xs={12} display="flex" justifyContent="center">
         <Button
           variant="contained"
-          fullWidth
           color="primary"
+          sx={{ width: 200 }}
           onClick={handleSearch}
         >
           검색
         </Button>
       </Grid>
+
     </Grid>
   );
 };
