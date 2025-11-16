@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.pci.onbid.mapper.StatsMapper">
+
+    <!-- 지역별 등록 건수 통계 -->
+    <select id="getRegionStats" resultType="com.pci.onbid.domain.RegionStatsDto">
+        SELECT 
+            sido,
+            COUNT(*) as count
+        FROM onbid_item 
+        WHERE sido IS NOT NULL AND sido != ''
+        GROUP BY sido
+        ORDER BY count DESC
+    </select>
+
+    <!-- 상태별 물건 수 통계 -->
+    <select id="getStatusStats" resultType="com.pci.onbid.domain.StatusStatsDto">
+        SELECT 
+            pbct_cltr_stat_nm as status,
+            COUNT(*) as count
+        FROM onbid_item 
+        WHERE pbct_cltr_stat_nm IS NOT NULL AND pbct_cltr_stat_nm != ''
+        GROUP BY pbct_cltr_stat_nm
+        ORDER BY count DESC
+    </select>
+
+    <!-- 지역별 최저입찰가 평균 통계 -->
+    <select id="getAvgPriceStats" resultType="com.pci.onbid.domain.AvgPriceStatsDto">
+        SELECT 
+            sido,
+            AVG(CAST(REPLACE(REPLACE(min_bid_prc, ',', ''), '원', '') AS DECIMAL(18,2))) as avgMinBid
+        FROM onbid_item 
+        WHERE sido IS NOT NULL AND sido != ''
+          AND min_bid_prc IS NOT NULL AND min_bid_prc != ''
+          AND min_bid_prc REGEXP '^[0-9,]+원?$'
+        GROUP BY sido
+        ORDER BY avgMinBid DESC
+    </select>
+
+</mapper>

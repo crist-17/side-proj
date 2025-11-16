@@ -21,7 +21,7 @@ const RefreshButton = ({ onRefresh }) => {
   return (
     <Button
       variant="contained"
-      color="secondary"
+      color="primary"
       onClick={handleClick}
       sx={{ mb: 2 }}
     >
