@@ -4,6 +4,13 @@
 CREATE DATABASE onbiddb DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE onbiddb;
 SHOW DATABASES;
+DROP DATABASE if EXISTS onbiddb;
+-- ========================================
+-- ✅ 1. 데이터베이스 생성 및 사용
+-- ========================================
+CREATE DATABASE onbiddb DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE onbiddb;
+SHOW DATABASES;
 
 
 -- ========================================
@@ -46,8 +53,9 @@ JOIN onbid_item t2
 ALTER TABLE onbid_item ADD CONSTRAINT uq_onbid_unique UNIQUE (ldnm_adrs);
 ALTER TABLE onbid_item ADD UNIQUE (plnm_no);
 ALTER TABLE onbid_item DROP INDEX uq_onbid_plnm;
+ALTER TABLE onbid_item DROP INDEX plnm_no;
 
-
+SELECT COUNT(*) FROM onbid_item;
 
 -- ========================================
 -- ✅ 3. bookmark (북마크 테이블)
@@ -117,3 +125,20 @@ INSERT INTO onbid_history (item_id, cltr_hstr_no, cltr_no, pbct_begn_dtm, pbct_c
 VALUES (1, 'H001', 'C001', '2025-01-01 10:00:00', '2025-01-10 17:00:00', 50000000, '입찰중');
 
 SELECT * FROM onbid_history ORDER BY id DESC LIMIT 5;
+
+
+-- ========================================
+-- ✅ 6. 로그인  쿼리
+-- ========================================
+
+CREATE TABLE users (
+                       id BIGINT AUTO_INCREMENT PRIMARY KEY, -- 사용자 고유번호
+                       username VARCHAR(50) NOT NULL UNIQUE, -- 로그인 ID
+                       PASSWORD VARCHAR(255) NOT NULL,       -- 암호화된 비밀번호 (BCrypt 60자리 이상)
+                       nickname VARCHAR(50) NOT NULL,        -- 화면 표시용 이름
+                       ROLE VARCHAR(20) DEFAULT 'user',      -- 권한 (USER / ADMIN)
+                       created_at DATETIME DEFAULT current_timestamp
+);
+
+SELECT * FROM users;
+
