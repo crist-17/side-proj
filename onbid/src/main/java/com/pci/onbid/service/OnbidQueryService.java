@@ -1,6 +1,5 @@
 package com.pci.onbid.service;
 
-import com.pci.onbid.domain.AddressGroupedDto;
 import com.pci.onbid.domain.HistoryDto;
 import com.pci.onbid.domain.PageRequest;
 import com.pci.onbid.mapper.OnbidQueryMapper;
@@ -21,14 +20,17 @@ public class OnbidQueryService {
     /** 그룹 리스트 + 메타데이터 통합 반환 */
     public Map<String, Object> getGroupedWithMeta(PageRequest request) {
         int offset = Math.max(0, (request.getPage() - 1)) * request.getSize();
-        List<AddressGroupedDto> list = mapper.selectGroupedByAddress(offset, request.getSize(), request.getQ());
+        List<?> list = mapper.selectGroupedByAddress(offset, request.getSize(), request.getQ());
         int total = mapper.countGroupedByAddress(request.getQ());
         return Map.of("page", request.getPage(), "size", request.getSize(), "total", total, "data", list);
     }
 
     /** 주소별 이력 조회 (자동 정규화) */
     public List<HistoryDto> getHistoryByAddress(String address) {
-        String normalized = normalizeAddress(address);
+        if (address == null || address.trim().isEmpty()) {
+            throw new IllegalArgumentException("Address parameter is required");
+        }
+        String normalized = normalizeAddress(address.trim());
         return mapper.selectHistoryByAddress(normalized);
     }
 
@@ -36,10 +38,10 @@ public class OnbidQueryService {
     public List<HistoryDto> saveHistory(Map<String, Object> body) {
         Long itemId = ((Number) body.get("itemId")).longValue();
         String address = (String) body.get("address");
-        
+
         int inserted = insertHistoryIfNotExists(itemId);
         List<HistoryDto> result = getHistoryByAddress(address);
-        
+
         log.info("📦 이력 저장 완료 | 저장: {}건 | 조회: {}건", inserted, result.size());
         return result;
     }

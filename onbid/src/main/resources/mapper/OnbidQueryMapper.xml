@@ -8,33 +8,28 @@
     <!-- 이력 저장 (중복 방지) -->
     <insert id="insertHistoryIfNotExists">
         INSERT IGNORE INTO onbid_history (
-            item_id,
-            normalized_address,
-            created_at
+        item_id,
+        cltr_hstr_no,
+        created_at
         )
-        SELECT 
-            #{itemId},
-            TRIM(
-                REGEXP_REPLACE(
-                    REGEXP_REPLACE(oi.ldnm_adrs, '\\[.*?\\]', ''),
-                    '\\(.*?\\)', ''
-                )
-            ),
-            NOW()
+        SELECT
+        #{itemId},
+        oi.cltr_hstr_no,
+        NOW()
         FROM onbid_item oi
         WHERE oi.id = #{itemId}
     </insert>
 
     <!-- 주소별 그룹 조회 -->
-    <select id="selectGroupedByAddress" resultType="com.pci.onbid.domain.AddressGroupedDto">
+    <select id="selectGroupedByAddress" resultType="AddressGroupedDto">
         SELECT
-            TRIM(
-                REGEXP_REPLACE(
-                    REGEXP_REPLACE(ldnm_adrs, '\\[.*?\\]', ''),
-                    '\\(.*?\\)', ''
-                )
-            ) AS address,
-            COUNT(*) AS count
+        TRIM(
+        REGEXP_REPLACE(
+        REGEXP_REPLACE(ldnm_adrs, '\\[.*?\\]', ''),
+        '\\(.*?\\)', ''
+        )
+        ) AS address,
+        COUNT(*) AS count
         FROM onbid_item
         WHERE ldnm_adrs IS NOT NULL AND ldnm_adrs != ''
         <if test="q != null and q != ''">
@@ -45,32 +40,24 @@
         LIMIT #{size} OFFSET #{offset}
     </select>
 
-    <!-- 주소별 그룹 총 개수 -->
-    <select id="countGroupedByAddress" resultType="int">
-        SELECT COUNT(DISTINCT 
-            TRIM(
-                REGEXP_REPLACE(
-                    REGEXP_REPLACE(ldnm_adrs, '\\[.*?\\]', ''),
-                    '\\(.*?\\)', ''
-                )
-            )
-        )
-        FROM onbid_item
-        WHERE ldnm_adrs IS NOT NULL AND ldnm_adrs != ''
-        <if test="q != null and q != ''">
-            AND ldnm_adrs LIKE CONCAT('%', #{q}, '%')
-        </if>
-    </select>
-
     <!-- 주소별 이력 조회 -->
-    <select id="selectHistoryByAddress" resultType="com.pci.onbid.domain.HistoryDto">
+    <select id="selectHistoryByAddress" resultType="HistoryDto">
         SELECT
-            h.id,
-            h.item_id AS itemId,
-            h.normalized_address AS address,
-            h.created_at AS createdAt
+        h.cltr_hstr_no AS cltrHstrNo,
+        h.cltr_no AS cltrNo,
+        h.pbct_begn_dtm AS pbctBegnDtm,
+        h.pbct_cls_dtm AS pbctClsDtm,
+        h.open_price AS openPrice,
+        h.cltr_stts_nm AS cltrSttsNm,
+        h.created_at AS createdAt
         FROM onbid_history h
-        WHERE h.normalized_address = #{address}
+        JOIN onbid_item oi ON h.item_id = oi.id
+        WHERE TRIM(
+        REGEXP_REPLACE(
+        REGEXP_REPLACE(oi.ldnm_adrs, '\\[.*?\\]', ''),
+        '\\(.*?\\)', ''
+        )
+        ) LIKE CONCAT('%', #{address}, '%')
         ORDER BY h.created_at DESC
     </select>
 

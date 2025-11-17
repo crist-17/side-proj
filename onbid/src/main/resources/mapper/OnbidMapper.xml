@@ -6,7 +6,7 @@
 <mapper namespace="com.pci.onbid.mapper.OnbidMapper">
 
     <!-- ✅ 전체 조회 -->
-    <select id="findAll" resultType="com.pci.onbid.domain.OnbidItem">
+    <select id="findAll" resultType="OnbidItem">
         SELECT
         id,
         plnm_no AS plnmNo,
@@ -27,7 +27,7 @@
 
     <!-- ⭐ 단일 삽입 (주소+이력번호 중복 방지) -->
     <insert id="insert"
-            parameterType="com.pci.onbid.domain.OnbidItem"
+            parameterType="OnbidItem"
             useGeneratedKeys="true"
             keyProperty="id">
         INSERT INTO onbid_item
@@ -45,7 +45,7 @@
     </insert>
 
     <!-- ✅ 검색 기능 -->
-    <select id="searchAdvanced" resultType="com.pci.onbid.domain.OnbidItem">
+    <select id="searchAdvanced" resultType="OnbidItem">
         SELECT
         id,
         plnm_no AS plnmNo,
@@ -83,7 +83,7 @@
     </select>
 
     <!-- ✅ DTO 기반 검색 -->
-    <select id="searchByCriteria" parameterType="com.pci.onbid.domain.SearchCriteria" resultType="com.pci.onbid.domain.OnbidItem">
+    <select id="searchByCriteria" parameterType="SearchCriteria" resultType="OnbidItem">
         SELECT
             id,
             plnm_no AS plnmNo,
@@ -121,7 +121,7 @@
     </select>
 
     <!-- ✅ 주소 기준 그룹 조회 -->
-    <select id="selectGroupedByAddress" resultType="com.pci.onbid.domain.AddressGroupedDto">
+    <select id="selectGroupedByAddress" resultType="AddressGroupedDto">
         SELECT
         TRIM(
         REGEXP_REPLACE(

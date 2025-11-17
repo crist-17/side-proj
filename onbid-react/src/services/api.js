@@ -34,7 +34,7 @@ export const onbidAPI = {
 
    // ✅ 주소별 이력조회
   getHistory: (address) =>
-    axios.get('/api/onbid/history', {
+      api.get('/api/onbid/history', {
       params: { address },
     }),
 };
