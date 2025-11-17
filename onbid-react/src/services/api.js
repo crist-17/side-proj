@@ -48,4 +48,11 @@ export const propertyAPI = {
     api.get(`/api/bookmarks?userId=${encodeURIComponent(userId)}`),
 };
 
+// ── 통계
+export const statsAPI = {
+  getRegionCount: () => api.get('/api/stats/region-count'),
+  getStatusCount: () => api.get('/api/stats/status-count'),
+  getAvgPrice: () => api.get('/api/stats/avg-price'),
+};
+
 export default api;

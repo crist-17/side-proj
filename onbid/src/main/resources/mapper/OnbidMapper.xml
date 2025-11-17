@@ -82,6 +82,44 @@
         ORDER BY id DESC
     </select>
 
+    <!-- ✅ DTO 기반 검색 -->
+    <select id="searchByCriteria" parameterType="com.pci.onbid.domain.SearchCriteria" resultType="com.pci.onbid.domain.OnbidItem">
+        SELECT
+            id,
+            plnm_no AS plnmNo,
+            cltr_mnmt_no AS cltrMnmtNo,
+            cltr_nm AS cltrNm,
+            ldnm_adrs AS ldnmAdrs,
+            min_bid_prc AS minBidPrc,
+            apsl_ases_avg_amt AS apslAsesAvgAmt,
+            pbct_begn_dtm AS pbctBegnDtm,
+            pbct_cls_dtm AS pbctClsDtm,
+            pbct_cltr_stat_nm AS pbctCltrStatNm,
+            sido,
+            created_at AS createdAt
+        FROM onbid_item
+        WHERE 1=1
+        <if test="region != null and region != ''">
+            AND sido LIKE CONCAT('%', #{region}, '%')
+        </if>
+        <if test="category != null and category != ''">
+            AND cltr_nm LIKE CONCAT('%', #{category}, '%')
+        </if>
+        <if test="status != null and status != ''">
+            AND pbct_cltr_stat_nm LIKE CONCAT('%', #{status}, '%')
+        </if>
+        <if test="minPrice != null">
+            AND CAST(min_bid_prc AS UNSIGNED) >= #{minPrice}
+        </if>
+        <if test="maxPrice != null">
+            AND CAST(min_bid_prc AS UNSIGNED) &lt;= #{maxPrice}
+        </if>
+        <if test="plnmNo != null and plnmNo != ''">
+            AND plnm_no LIKE CONCAT('%', #{plnmNo}, '%')
+        </if>
+        ORDER BY id DESC
+    </select>
+
     <!-- ✅ 주소 기준 그룹 조회 -->
     <select id="selectGroupedByAddress" resultType="com.pci.onbid.domain.AddressGroupedDto">
         SELECT

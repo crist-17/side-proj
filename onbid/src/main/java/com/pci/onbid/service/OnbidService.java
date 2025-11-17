@@ -1,6 +1,7 @@
 package com.pci.onbid.service;
 
 import com.pci.onbid.domain.OnbidItem;
+import com.pci.onbid.domain.SearchCriteria;
 import com.pci.onbid.mapper.OnbidMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -189,7 +190,12 @@ public class OnbidService {
         return onbidMapper.findAll();
     }
 
-    /** ✅ 검색 (AND 조건 기반) */
+    /** ✅ 검색 (DTO 기반) */
+    public List<OnbidItem> searchAdvanced(SearchCriteria criteria) {
+        return onbidMapper.searchByCriteria(criteria);
+    }
+
+    /** ✅ 검색 (개별 파라미터 기반) - 기존 호환성 유지 */
     public List<OnbidItem> searchAdvanced(String region, String category,
                                           String status, Long minPrice, Long maxPrice, String plnmNo) {
         return onbidMapper.searchAdvanced(region, category, status, minPrice, maxPrice, plnmNo);

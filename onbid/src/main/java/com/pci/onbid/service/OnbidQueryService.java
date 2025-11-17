@@ -2,12 +2,14 @@ package com.pci.onbid.service;
 
 import com.pci.onbid.domain.AddressGroupedDto;
 import com.pci.onbid.domain.HistoryDto;
+import com.pci.onbid.domain.PageRequest;
 import com.pci.onbid.mapper.OnbidQueryMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -16,20 +18,30 @@ public class OnbidQueryService {
 
     private final OnbidQueryMapper mapper;
 
-    /** 주소별 그룹 조회 */
-    public List<AddressGroupedDto> getGroupedByAddress(int page, int size, String q) {
-        int offset = Math.max(0, (page - 1)) * size;
-        return mapper.selectGroupedByAddress(offset, size, q);
+    /** 그룹 리스트 + 메타데이터 통합 반환 */
+    public Map<String, Object> getGroupedWithMeta(PageRequest request) {
+        int offset = Math.max(0, (request.getPage() - 1)) * request.getSize();
+        List<AddressGroupedDto> list = mapper.selectGroupedByAddress(offset, request.getSize(), request.getQ());
+        int total = mapper.countGroupedByAddress(request.getQ());
+        return Map.of("page", request.getPage(), "size", request.getSize(), "total", total, "data", list);
     }
 
-    /** 총 개수 */
-    public int getGroupedTotalCount(String q) {
-        return mapper.countGroupedByAddress(q);
+    /** 주소별 이력 조회 (자동 정규화) */
+    public List<HistoryDto> getHistoryByAddress(String address) {
+        String normalized = normalizeAddress(address);
+        return mapper.selectHistoryByAddress(normalized);
     }
 
-    /** 주소별 이력 조회 */
-    public List<HistoryDto> getHistoryByAddress(String normalizedAddress) {
-        return mapper.selectHistoryByAddress(normalizedAddress);
+    /** 이력 저장 후 해당 주소 이력 반환 */
+    public List<HistoryDto> saveHistory(Map<String, Object> body) {
+        Long itemId = ((Number) body.get("itemId")).longValue();
+        String address = (String) body.get("address");
+        
+        int inserted = insertHistoryIfNotExists(itemId);
+        List<HistoryDto> result = getHistoryByAddress(address);
+        
+        log.info("📦 이력 저장 완료 | 저장: {}건 | 조회: {}건", inserted, result.size());
+        return result;
     }
 
     /** onbid_item 등록 후 자동 이력 저장 */
@@ -42,5 +54,14 @@ public class OnbidQueryService {
             log.error("❌ 이력 자동저장 오류: {}", e.getMessage());
             return 0;
         }
+    }
+
+    /** 주소 정규화 유틸리티 */
+    private String normalizeAddress(String raw) {
+        if (raw == null) return "";
+        return raw.replaceAll("\\[.*?\\]", "")
+                .replaceAll("\\(.*?\\)", "")
+                .replaceAll("\\s{2,}", " ")
+                .trim();
     }
 }
