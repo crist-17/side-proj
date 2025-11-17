@@ -16,7 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/stats")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:5173")
 @Tag(name = "Statistics", description = "온비드 통계 API")
 public class StatsController {
 
@@ -30,12 +30,14 @@ public class StatsController {
         return ResponseEntity.ok(stats);
     }
 
+
     @GetMapping("/status-count")
     @Operation(summary = "상태별 물건 수 조회", description = "입찰 상태별 물건 수를 조회합니다")
     public ResponseEntity<Map<String, Long>> getStatusCount() {
         Map<String, Long> stats = statsService.getStatusCount();
         return ResponseEntity.ok(stats);
     }
+
 
     @GetMapping("/avg-price")
     @Operation(summary = "지역별 평균 최저입찰가 조회", description = "시도별 최저입찰가 평균을 조회합니다")

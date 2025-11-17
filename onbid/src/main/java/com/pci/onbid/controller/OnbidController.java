@@ -1,6 +1,7 @@
 package com.pci.onbid.controller;
 
 import com.pci.onbid.domain.OnbidItem;
+import com.pci.onbid.domain.SearchCriteria;
 import com.pci.onbid.service.OnbidService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,6 +43,8 @@ public class OnbidController {
         return "✅ 온비드 API 호출 완료 (콘솔 확인)";
     }
 
+
+
     // ✅ (2) 전체 목록 조회
     @Operation(
             summary = "온비드 전체 목록 조회",
@@ -51,6 +54,9 @@ public class OnbidController {
     public List<OnbidItem> getAllItems() {
         return onbidService.getAllItems();
     }
+
+
+
 
     // ✅ (3) 세분화 검색 (AND 조건 기반)
     @Operation(
@@ -64,16 +70,11 @@ public class OnbidController {
                     """
     )
     @GetMapping(value = "/search", produces = "application/json; charset=UTF-8")
-    public List<OnbidItem> searchAdvanced(
-            @RequestParam(required = false) String region,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) Long minPrice,
-            @RequestParam(required = false) Long maxPrice,
-            @RequestParam(required = false) String plnmNo
-    ) {
-        return onbidService.searchAdvanced(region, category, status, minPrice, maxPrice, plnmNo);
+    public List<OnbidItem> searchAdvanced(SearchCriteria criteria) {
+        return onbidService.searchAdvanced(criteria);
     }
+
+
 
     // ✅ (4) Swagger 연결 테스트용
     @Operation(
@@ -84,6 +85,8 @@ public class OnbidController {
     public String hello() {
         return "Swagger 테스트 성공 ✅";
     }
+
+
 
     @GetMapping("/test-history")
     public String testHistory() {
