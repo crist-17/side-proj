@@ -4,7 +4,7 @@
 <mapper namespace="com.pci.onbid.mapper.StatsMapper">
 
     <!-- 지역별 등록 건수 통계 -->
-    <select id="getRegionStats" resultType="com.pci.onbid.domain.RegionStatsDto">
+    <select id="getRegionStats" resultType="RegionStatsDto">
         SELECT 
             sido,
             COUNT(*) as count
@@ -15,7 +15,7 @@
     </select>
 
     <!-- 상태별 물건 수 통계 -->
-    <select id="getStatusStats" resultType="com.pci.onbid.domain.StatusStatsDto">
+    <select id="getStatusStats" resultType="StatusStatsDto">
         SELECT 
             pbct_cltr_stat_nm as status,
             COUNT(*) as count
@@ -26,7 +26,7 @@
     </select>
 
     <!-- 지역별 최저입찰가 평균 통계 -->
-    <select id="getAvgPriceStats" resultType="com.pci.onbid.domain.AvgPriceStatsDto">
+    <select id="getAvgPriceStats" resultType="AvgPriceStatsDto">
         SELECT 
             sido,
             AVG(CAST(REPLACE(REPLACE(min_bid_prc, ',', ''), '원', '') AS DECIMAL(18,2))) as avgMinBid
