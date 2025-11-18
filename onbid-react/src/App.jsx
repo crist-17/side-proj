@@ -11,6 +11,7 @@ import PropertyList from './pages/PropertyList';
 import BookmarkList from './pages/BookmarkList';
 import Stats from './pages/Stats';
 import Settings from './pages/Settings';
+import Login from './pages/Login';
 import './App.css';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
     <Router>
       <BookmarkProvider>
         <Routes>
+          <Route path="/login" element={<Login />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<PropertyList />} />
             <Route path="/bookmarks" element={<BookmarkList />} />

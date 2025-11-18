@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TextField, Button, Grid, MenuItem } from '@mui/material';
-import axios from 'axios';
+import { onbidAPI } from '../services/api';
 
 const SearchBar = ({ setProperties }) => {
   const [filters, setFilters] = useState({
@@ -22,10 +22,7 @@ const SearchBar = ({ setProperties }) => {
         Object.entries(filters).filter(([_, v]) => v !== '')
       );
 
-      const res = await axios.get(
-        'http://localhost:8092/api/onbid/search',
-        { params }
-      );
+      const res = await onbidAPI.search(params);
 
       if (Array.isArray(res.data)) {
         setProperties(res.data);

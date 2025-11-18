@@ -1,12 +1,12 @@
 import React from 'react';
 import { Button } from '@mui/material';
-import axios from 'axios';
+import api from '../services/api';
 
 const RefreshButton = ({ onRefresh }) => {
   const handleClick = async () => {
     try {
       // 1) 백엔드에서 온비드 API를 불러와 DB에 저장
-      await axios.get('http://localhost:8092/api/onbid/test');
+      await api.get('/onbid/test');
 
       // 2) 저장 완료 후 목록 다시 가져오기
       await onRefresh();
