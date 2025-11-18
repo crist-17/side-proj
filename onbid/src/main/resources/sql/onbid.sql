@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS onbid_history (
     pbct_cls_dtm DATETIME,               -- 공고종료일시
     open_price DECIMAL(18,2),            -- 게시가격
     cltr_stts_nm VARCHAR(100),           -- 물건상태명
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP  DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_history_item FOREIGN KEY (item_id) REFERENCES onbid_item(id)
     );
 
@@ -141,4 +141,27 @@ CREATE TABLE users (
 );
 
 SELECT * FROM users;
+
+INSERT INTO users (username, password, nickname, role)
+VALUES ('testuser', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.', '테스트사용자', 'user');
+
+SELECT id, username, password FROM users;
+
+UPDATE users
+SET password = '$2a$10$oiqXoKi5W0/z6gG4F9zzCeZJxN3Ht0bNBqhjjmx9biyDuCQd8BgZy'
+WHERE username = 'testuser';
+
+
+
+
+
+DELETE FROM users WHERE username = 'testuser';
+INSERT INTO users (username, password, nickname, role) VALUES
+    ('testuser', '위에서_복사한_해시값', '테스트사용자', 'user');
+
+SELECT LENGTH(password) FROM users WHERE username='testuser';
+
+SELECT password, LENGTH(password)
+FROM users
+WHERE username='testuser';
 
