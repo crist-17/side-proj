@@ -239,7 +239,7 @@ const Login = () => {
               sx={{ color: '#aaa', display: 'block' }}
             >
               아이디: testuser<br />
-              비밀번호: password123
+              비밀번호: password
             </Typography>
           </Box>
         </Box>
